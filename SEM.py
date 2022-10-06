@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-class SEM_agent(object):
+class SemMapAgent(object):
   def __init__(self, agent_config, initial_location):
     self.resolution = agent_config.sensor_specifications[0].resolution
     

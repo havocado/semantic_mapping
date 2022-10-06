@@ -16,7 +16,7 @@ if (display):
 backend_cfg = habitat_sim.SimulatorConfiguration()
 # Specifying scene path
 backend_cfg.scene_id = (
-  "../map_plan_baseline_modified/data/scene_datasets/habitat-test-scenes/skokloster-castle.glb"
+  "../map_plan_baseline_modified/data/scene_datasets/habitat-test-scenes/van-gogh-room.glb"
 )
 
 # Setting up sensor
@@ -50,7 +50,7 @@ location[0] = topdown_position[1] * (-1)
 location[1] = topdown_position[0] * (-1)
 location[2] = sim.last_state().position[0]
 
-semantic_agent = SEM.SEM_agent(agent_config, location)
+semantic_agent = SEM.SemMapAgent(agent_config, location)
 
 
 def _action(sim):
