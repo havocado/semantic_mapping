@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import cv2
 
 class SemMapAgent(object):
   def __init__(self, agent_config, initial_location):
@@ -12,7 +13,16 @@ class SemMapAgent(object):
     self.camera_height = agent_config.sensor_specifications[0].position[2] # TODO: Verify!!
 
     # Init map related location info
-    self.map_center = np.array([5.0,5.0]); # TODO: Fix this to be middle of drawn map
+    self.map_grid_size = 0.2
+    self.map_width = 50
+    self.map_grid_width = np.round(self.map_width / self.map_grid_size).astype(int)
+    self.grid_map = np.zeros([self.map_grid_width, self.map_grid_width])
+    # map_center is index of center of map
+    self.map_center = np.array([np.round(self.map_grid_width/2.).astype(int), np.round(self.map_grid_width/2.).astype(int)]) # TODO: Fix this to be middle of drawn map
+
+    print("making window...")
+    self.fig, (self.ax0, self.ax1) = plt.subplots(1, 2)
+    plt.ion()
 
     # Init camera info
     self.res_width = self.resolution[0]
@@ -20,25 +30,27 @@ class SemMapAgent(object):
     self.camera_hfov = agent_config.sensor_specifications[0].hfov
     self.camera_xc = (self.res_width-1.0) / 2
     self.camera_zc = (self.res_height-1.0) / 2
-    # TODO: replace 90 with self.camera_hfov.
+    # TODO: replace 90 with self.camera_hfov
     self.camera_f = (self.res_width / 2.) / np.tan(np.deg2rad(90/ 2.))
     
     self.all_marked_points = np.array([])
-    self.all_agent_marks = self.map_center.reshape(1,2)
+    self.all_agent_marks = np.zeros([1,2])
 
     self.done = False
-    self.display_test_figs = False
-    ## TODO: Fill this.
+    self.display_test_figs = True
 
   def act(self, obs, theta, location, done):
     depth = obs['depth']
+    theta = theta
     self.done = done
     self.update_agent_location(theta, location)
     coords = self.unproject_to_world(depth)
     self.add_to_map(coords)
+    if (self.display_test_figs or self.done):
+      self.display_map(depth)
 
   def update_agent_location(self, theta, location):
-    self.agent_location[0:2] = self.map_center + (location - self.initial_location)
+    self.agent_location[0:2] = (location - self.initial_location)
     self.agent_location[2] = theta
 
   def unproject_to_world(self, depth):
@@ -54,6 +66,8 @@ class SemMapAgent(object):
     # Slice where Y is between -1 and 1.
     sliced_coords = coords[coords[:,:,2]>-1]
     sliced_coords = sliced_coords[sliced_coords[:,2]<1]
+
+    self.grid_map[tuple(self.xy_to_grid_index(sliced_coords[:,0], sliced_coords[:,1]))] = 1
     
     if (self.all_marked_points.size == 0):
       self.all_marked_points = sliced_coords
@@ -62,15 +76,16 @@ class SemMapAgent(object):
 
     self.all_agent_marks = np.concatenate((self.all_agent_marks, self.agent_location[0:2].reshape(1,2)), axis=0)
     
-    #ax.azim = 0
-    #ax.elev = 0
-    if (self.display_test_figs or self.done):
-      fig = plt.figure()
-      plt.scatter(self.all_marked_points[:,0], self.all_marked_points[:,1], marker='.')
-      plt.scatter(self.all_agent_marks[:,0], self.all_agent_marks[:,1], marker='*', color='gray')
-      plt.scatter(self.agent_location[0], self.agent_location[1], marker='*', color='red')
-      plt.show()
-    print("---")
+  def display_map(self, depth):
+    self.ax1.cla()
+    self.ax1.imshow((self.grid_map), cmap='gray')
+    self.ax0.imshow(depth/10.0, cmap='gray')
+    self.ax1.plot(self.x_to_grid_index(self.all_agent_marks[:,0]), self.y_to_grid_index(self.all_agent_marks[:,1]), linestyle='-', color='green')
+    self.ax1.scatter(self.x_to_grid_index(self.agent_location[0]), self.y_to_grid_index(self.agent_location[1]), marker='*', color='red')
+    
+    plt.show()
+    plt.waitforbuttonpress()
+    
 
   def depth2camera(self, depth):
     # TODO: Rewrite and organize.
@@ -97,11 +112,10 @@ class SemMapAgent(object):
     return geocentric_coords
 
   def geocentric2world(self, geocentric_coords):
-    # TODO: Fix this part
-    R = self.get_rotation_matrix([0.,0.,1.], angle=self.agent_location[2]-np.pi/2.)
+    R = self.get_rotation_matrix([0.,0.,1.], angle=self.agent_location[2])
     world_coord = np.matmul(geocentric_coords.reshape(-1,3), R.T).reshape(geocentric_coords.shape)
-    world_coord[:,:,0] = world_coord[:,:,0] + self.agent_location[0]
-    world_coord[:,:,1] = world_coord[:,:,1] + self.agent_location[1]
+    world_coord[:,:,0] = world_coord[:,:,0] + self.agent_location[1]
+    world_coord[:,:,1] = world_coord[:,:,1] + self.agent_location[0]
     
     """
     fig = plt.figure()
@@ -132,3 +146,11 @@ class SemMapAgent(object):
 
   def normalize(self, v):
     return v / np.linalg.norm(v)
+
+  # TODO: clean up below 2 functions
+  def xy_to_grid_index(self, x, y):
+    return [np.round(x/self.map_grid_size).astype(int)+self.map_center[0], np.round(y/self.map_grid_size).astype(int)+self.map_center[1]]
+  def x_to_grid_index(self, x):
+    return np.round(x/self.map_grid_size).astype(int)+self.map_center[0]
+  def y_to_grid_index(self, y):
+    return np.round(y/self.map_grid_size).astype(int)+self.map_center[1]
