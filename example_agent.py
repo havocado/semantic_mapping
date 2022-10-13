@@ -54,7 +54,7 @@ semantic_agent = SEM.SemMapAgent(agent_config, location)
 
 
 def _action(sim):
-  num_acts = 100
+  num_acts = 10
   for act_no in range(num_acts):
     action_rand = random.randint(0,100)
     if action_rand <= 60:

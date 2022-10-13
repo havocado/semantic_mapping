@@ -1,9 +1,15 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import os
+import imageio
+from typing import Dict, List, Optional, Tuple
+from tempfile import mkstemp
+import tqdm
 import cv2
 
 class SemMapAgent(object):
   def __init__(self, agent_config, initial_location):
+    self.frame_count = 0
     self.resolution = agent_config.sensor_specifications[0].resolution
     
     # Init location info
@@ -22,6 +28,11 @@ class SemMapAgent(object):
 
     print("making window...")
     self.fig, (self.ax0, self.ax1) = plt.subplots(1, 2)
+    self.fig.set_size_inches(13.5, 7)
+    #self.xticks = np.arange(self.initial_location[0]-(self.map_center[0]/self.map_grid_size),
+      #self.initial_location[0]+(self.map_grid_width-self.map_center[0])/self.map_grid_size, self.map_grid_width/5)
+    #self.yticks = np.arange(self.initial_location[1]-(self.map_center[1]/self.map_grid_size),
+      #self.initial_location[1]+(self.map_grid_width-self.map_center[1])/self.map_grid_size, self.map_grid_width/5)
     plt.ion()
 
     # Init camera info
@@ -39,15 +50,23 @@ class SemMapAgent(object):
     self.done = False
     self.display_test_figs = True
 
+    self.pngs = []
+
   def act(self, obs, theta, location, done):
+    self.frame_count = self.frame_count+1
     depth = obs['depth']
     theta = theta
     self.done = done
+    print("--unprojecting")
     self.update_agent_location(theta, location)
     coords = self.unproject_to_world(depth)
+    print("--updating map")
     self.add_to_map(coords)
+    print("--displaying map")
     if (self.display_test_figs or self.done):
       self.display_map(depth)
+    if self.done:
+      self.save_gif()
 
   def update_agent_location(self, theta, location):
     self.agent_location[0:2] = (location - self.initial_location)
@@ -82,10 +101,24 @@ class SemMapAgent(object):
     self.ax0.imshow(depth/10.0, cmap='gray')
     self.ax1.plot(self.x_to_grid_index(self.all_agent_marks[:,0]), self.y_to_grid_index(self.all_agent_marks[:,1]), linestyle='-', color='green')
     self.ax1.scatter(self.x_to_grid_index(self.agent_location[0]), self.y_to_grid_index(self.agent_location[1]), marker='*', color='red')
+    print(self.ax1)
+
+    # Saving
+    print("--start saving")
+    self.fig.savefig("results/results_"+str(self.frame_count)+".png")
+    self.pngs.append("results/results_"+str(self.frame_count)+".png")
+    print("--done saving")
     
     plt.show()
-    plt.waitforbuttonpress()
+    #plt.waitforbuttonpress()
     
+  def save_gif(self):
+    images = []
+    for png in self.pngs:
+      img = imageio.imread(png)
+      print("appending ", png)
+      images.append(img)
+    imageio.mimsave('temp.gif', images)
 
   def depth2camera(self, depth):
     # TODO: Rewrite and organize.
