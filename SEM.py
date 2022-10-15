@@ -88,7 +88,6 @@ class SemMapAgent(object):
     self.all_agent_marks = np.concatenate((self.all_agent_marks, self.agent_location[0:2].reshape(1,2)), axis=0)
     
   def display_map(self, depth):
-    self.fig.clf()
     self.ax1.imshow((self.grid_map), cmap='gray')
     self.ax0.imshow(depth/10.0, cmap='gray')
     self.ax1.plot(self.x_to_grid_index(self.all_agent_marks[:,0]), self.y_to_grid_index(self.all_agent_marks[:,1]), linestyle='-', color='green')
@@ -101,7 +100,8 @@ class SemMapAgent(object):
     self.pngs.append("results/results_"+str(self.frame_count)+".jpg")
     
     plt.show()
-    #plt.waitforbuttonpress()
+    plt.waitforbuttonpress()
+    self.fig.clf()
     
   def save_gif(self):
     images = []
