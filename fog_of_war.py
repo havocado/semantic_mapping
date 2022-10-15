@@ -10,7 +10,7 @@ import numpy as np
 #from habitat.utils.visualizations import maps
 
 
-@numba.jit(nopython=True)
+#@numba.jit(nopython=True)
 def bresenham_supercover_line(pt1, pt2):
     r"""Line drawing algo based
     on http://eugen.dedu.free.fr/projects/bresenham/
@@ -78,29 +78,27 @@ def bresenham_supercover_line(pt1, pt2):
     return line_pts
 
 
-@numba.jit(nopython=True)
-def draw_fog_of_war_line(top_down_map, fog_of_war_mask, pt1, pt2):
+#@numba.jit(nopython=True)
+def draw_fog_of_war_line(top_down_map, new_grid_map, pt1, pt2):
     r"""Draws a line on the fog_of_war_mask mask between pt1 and pt2"""
 
     for pt in bresenham_supercover_line(pt1, pt2):
         x, y = pt
 
-        if x < 0 or x >= fog_of_war_mask.shape[0]:
+        if x < 0 or x >= new_grid_map.shape[0]:
             break
 
-        if y < 0 or y >= fog_of_war_mask.shape[1]:
+        if y < 0 or y >= new_grid_map.shape[1]:
             break
-
-        if top_down_map[x, y] == maps.MAP_INVALID_POINT:
-            break
-
-        fog_of_war_mask[x, y] = 1
+        
+        print("x, y: ", x, y)
+        new_grid_map[x, y] = 0
 
 
-@numba.jit(nopython=True)
+#@numba.jit(nopython=True)
 def _draw_loop(
     top_down_map,
-    fog_of_war_mask,
+    new_grid_map,
     current_point,
     current_angle,
     max_line_len,
@@ -109,7 +107,7 @@ def _draw_loop(
     for angle in angles:
         draw_fog_of_war_line(
             top_down_map,
-            fog_of_war_mask,
+            new_grid_map,
             current_point,
             current_point
             + max_line_len
@@ -121,7 +119,6 @@ def _draw_loop(
 
 def reveal_fog_of_war(
     top_down_map: np.ndarray,
-    current_fog_of_war_mask: np.ndarray,
     current_point: np.ndarray,
     current_angle: float,
     fov: float = 90,
@@ -147,14 +144,14 @@ def reveal_fog_of_war(
         -fov / 2, fov / 2, step=1.0 / max_line_len, dtype=np.float32
     )
 
-    fog_of_war_mask = current_fog_of_war_mask.copy()
+    new_grid_map = top_down_map.copy()
     _draw_loop(
         top_down_map,
-        fog_of_war_mask,
+        new_grid_map,
         current_point,
         current_angle,
         max_line_len,
         angles,
     )
 
-    return fog_of_war_mask
+    return new_grid_map
