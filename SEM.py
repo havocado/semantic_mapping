@@ -26,13 +26,13 @@ class SemMapAgent(object):
     # map_center is index of center of map
     self.map_center = np.array([np.round(self.map_grid_width/2.).astype(int), np.round(self.map_grid_width/2.).astype(int)]) # TODO: Fix this to be middle of drawn map
 
-    print("making window...")
     self.fig, (self.ax0, self.ax1) = plt.subplots(1, 2)
     self.fig.set_size_inches(13.5, 7)
     #self.xticks = np.arange(self.initial_location[0]-(self.map_center[0]/self.map_grid_size),
       #self.initial_location[0]+(self.map_grid_width-self.map_center[0])/self.map_grid_size, self.map_grid_width/5)
     #self.yticks = np.arange(self.initial_location[1]-(self.map_center[1]/self.map_grid_size),
       #self.initial_location[1]+(self.map_grid_width-self.map_center[1])/self.map_grid_size, self.map_grid_width/5)
+    self.fig.subplots_adjust(wspace=0, hspace=0)
     plt.ion()
 
     # Init camera info
@@ -57,12 +57,9 @@ class SemMapAgent(object):
     depth = obs['depth']
     theta = theta
     self.done = done
-    print("--unprojecting")
     self.update_agent_location(theta, location)
     coords = self.unproject_to_world(depth)
-    print("--updating map")
     self.add_to_map(coords)
-    print("--displaying map")
     if (self.display_test_figs or self.done):
       self.display_map(depth)
     if self.done:
@@ -87,27 +84,21 @@ class SemMapAgent(object):
     sliced_coords = sliced_coords[sliced_coords[:,2]<1]
 
     self.grid_map[tuple(self.xy_to_grid_index(sliced_coords[:,0], sliced_coords[:,1]))] = 1
-    
-    if (self.all_marked_points.size == 0):
-      self.all_marked_points = sliced_coords
-    else:
-      self.all_marked_points = np.concatenate((self.all_marked_points, sliced_coords), axis=0)
 
     self.all_agent_marks = np.concatenate((self.all_agent_marks, self.agent_location[0:2].reshape(1,2)), axis=0)
     
   def display_map(self, depth):
-    self.ax1.cla()
+    self.fig.clf()
     self.ax1.imshow((self.grid_map), cmap='gray')
     self.ax0.imshow(depth/10.0, cmap='gray')
     self.ax1.plot(self.x_to_grid_index(self.all_agent_marks[:,0]), self.y_to_grid_index(self.all_agent_marks[:,1]), linestyle='-', color='green')
     self.ax1.scatter(self.x_to_grid_index(self.agent_location[0]), self.y_to_grid_index(self.agent_location[1]), marker='*', color='red')
-    print(self.ax1)
+    self.ax0.axis('off')
+    self.ax1.axis('off')
 
     # Saving
-    print("--start saving")
-    self.fig.savefig("results/results_"+str(self.frame_count)+".png")
-    self.pngs.append("results/results_"+str(self.frame_count)+".png")
-    print("--done saving")
+    self.fig.savefig("results/results_"+str(self.frame_count)+".jpg")
+    self.pngs.append("results/results_"+str(self.frame_count)+".jpg")
     
     plt.show()
     #plt.waitforbuttonpress()
