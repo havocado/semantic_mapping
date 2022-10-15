@@ -84,11 +84,6 @@ class SemMapAgent(object):
     sliced_coords = sliced_coords[sliced_coords[:,2]<1]
 
     self.grid_map[tuple(self.xy_to_grid_index(sliced_coords[:,0], sliced_coords[:,1]))] = 1
-    
-    """if (self.all_marked_points.size == 0):
-      self.all_marked_points = sliced_coords
-    else:
-      self.all_marked_points = np.concatenate((self.all_marked_points, sliced_coords), axis=0)"""
 
     self.all_agent_marks = np.concatenate((self.all_agent_marks, self.agent_location[0:2].reshape(1,2)), axis=0)
     
