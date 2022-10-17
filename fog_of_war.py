@@ -1,14 +1,9 @@
-#!/usr/bin/env python3
-
-# Copyright (c) Facebook, Inc. and its affiliates.
-# This source code is licensed under the MIT license found in the
-# LICENSE file in the root directory of this source tree.
-
+# From: https://github.com/facebookresearch/habitat-lab/blob/cc9e4a9adc06950f7511745d681726efc0d1a85a/habitat-lab/habitat/utils/visualizations/fog_of_war.py
 import numba
 import numpy as np
+import matplotlib.pyplot as plt
 
 #from habitat.utils.visualizations import maps
-
 
 #@numba.jit(nopython=True)
 def bresenham_supercover_line(pt1, pt2):
@@ -83,15 +78,17 @@ def draw_fog_of_war_line(top_down_map, new_grid_map, pt1, pt2):
     r"""Draws a line on the fog_of_war_mask mask between pt1 and pt2"""
 
     for pt in bresenham_supercover_line(pt1, pt2):
-        x, y = pt
+        y, x = pt
 
         if x < 0 or x >= new_grid_map.shape[0]:
             break
 
         if y < 0 or y >= new_grid_map.shape[1]:
             break
+
+        if (new_grid_map[x, y] == 1):
+            break
         
-        print("x, y: ", x, y)
         new_grid_map[x, y] = 0
 
 
@@ -132,13 +129,15 @@ def reveal_fog_of_war(
         current_fog_of_war_mask: The current fog-of-war mask to reveal the fog-of-war on
         current_point: The current location of the agent on the fog_of_war_mask
         current_angle: The current look direction of the agent on the fog_of_war_mask
-        fov: The feild of view of the agent
+        fov: The field of view of the agent
         max_line_len: The maximum length of the lines used to reveal the fog-of-war
     Returns:
         The updated fog_of_war_mask
     """
     fov = np.deg2rad(fov)
 
+    current_angle = current_angle*(-1)
+    #current_angle = current_angle+np.pi/4.
     # Set the angle step to a value such that delta_angle * max_line_len = 1
     angles = np.arange(
         -fov / 2, fov / 2, step=1.0 / max_line_len, dtype=np.float32
