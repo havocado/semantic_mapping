@@ -16,7 +16,7 @@ class SemMapAgent(object):
 
     # Init map related location info
     self.map_grid_size = 0.2
-    self.map_width = 50
+    self.map_width = 10
     self.map_grid_width = np.round(self.map_width / self.map_grid_size).astype(int)
     self.grid_map = np.zeros([self.map_grid_width, self.map_grid_width])
     self.grid_map.fill(0.5)
@@ -42,6 +42,8 @@ class SemMapAgent(object):
     self.all_agent_marks = np.zeros([1,2])
 
     self.done = False
+
+    # Params for testing
     self.display_test_figs = False
     self.save_test_figs = True
 
@@ -79,7 +81,16 @@ class SemMapAgent(object):
     # Slice where Y is between -1 and 1.
     sliced_coords = coords[coords[:,:,2]>-1]
     sliced_coords = sliced_coords[sliced_coords[:,2]<1]
-    self.grid_map[tuple(self.xy_to_grid_index(sliced_coords[:,0], sliced_coords[:,1]))] = 1
+
+    # Check if all coordinates are within grid size.
+    grid_indices = self.xy_to_grid_index(sliced_coords[:,0], sliced_coords[:,1])
+    while (not(np.min(grid_indices[0])>=0 and np.max(grid_indices[0])<=self.map_grid_width and np.min(grid_indices[1])>=0 and np.max(grid_indices[1])<=self.map_grid_width)):
+      self.resize_map()
+      grid_indices = self.xy_to_grid_index(sliced_coords[:,0], sliced_coords[:,1])
+
+    # Add new data to map
+    self.grid_map[tuple(grid_indices)] = 1
+    # Add agent location info
     self.all_agent_marks = np.concatenate((self.all_agent_marks, self.agent_location[0:2].reshape(1,2)), axis=0)
     
   def display_map(self, depth):
@@ -149,6 +160,26 @@ class SemMapAgent(object):
     ax.set_label('Z')
     plt.show()"""
     return world_coord
+
+  def resize_map(self):
+    # Resize map by *1.2
+    resize_scale = 1.2
+    # Recalculate parameters
+    new_map_width = np.round(self.map_width * resize_scale).astype(int)
+    new_map_grid_width = np.round(new_map_width / self.map_grid_size).astype(int)
+    new_grid_map = np.zeros([new_map_grid_width, new_map_grid_width])
+    
+    # Copy data to new grid map
+    new_grid_map.fill(0.5)
+    new_map_center = np.array([np.round(new_map_grid_width/2.).astype(int), np.round(new_map_grid_width/2.).astype(int)])
+    old_offset = new_map_center[0:2]-self.map_center[0:2]
+    new_grid_map[old_offset[0]:old_offset[0]+self.map_grid_width, old_offset[1]:old_offset[1]+self.map_grid_width] = self.grid_map
+
+    # Update map
+    self.map_width = new_map_width
+    self.map_grid_width = new_map_grid_width
+    self.map_center = new_map_center
+    self.grid_map = new_grid_map
 
   def get_rotation_matrix(self, ax_, angle):
     # TODO: Fix everything here

@@ -17,7 +17,7 @@ if (display):
 backend_cfg = habitat_sim.SimulatorConfiguration()
 # Specifying scene path
 backend_cfg.scene_id = (
-  "../map_plan_baseline_modified/data/scene_datasets/habitat-test-scenes/skokloster-castle.glb"
+  "data/scene_datasets/habitat-test-scenes/skokloster-castle.glb"
 )
 
 # Setting up sensor
@@ -56,6 +56,7 @@ semantic_agent = SEM.SemMapAgent(agent_config, location)
 def _action(sim):
   num_acts = 100
   for act_no in range(num_acts):
+    print("Frame ", act_no)
     action_rand = random.randint(0,100)
     if action_rand <= 60:
         action_code = 0
@@ -75,8 +76,6 @@ def _action(sim):
     location = np.zeros(2)
     location[0] = topdown_position[2] * (-1)
     location[1] = topdown_position[0]
-    print("location: ", location)
-    print("theta: ", theta)
 
     # TODO: Get rid of this
     obs["depth"] = obs["depth"][:,:,np.newaxis]
