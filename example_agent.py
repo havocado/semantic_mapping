@@ -58,7 +58,6 @@ def _action(sim):
   for act_no in range(num_acts):
     print("Frame ", act_no)
     action_rand = random.randint(0,100)
-    action_code = 0
     if action_rand <= 60:
         action_code = 0
         obs = sim.step("move_forward")
