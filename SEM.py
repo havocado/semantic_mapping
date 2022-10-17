@@ -42,8 +42,10 @@ class SemMapAgent(object):
     self.all_agent_marks = np.zeros([1,2])
 
     self.done = False
-    self.display_test_figs = False
-    self.save_test_figs = True
+
+    # Params for testing
+    self.display_test_figs = True
+    self.save_test_figs = False
 
     self.pngs = []
 
@@ -56,6 +58,7 @@ class SemMapAgent(object):
     coords = self.unproject_to_world(depth)
     self.add_to_map(coords)
     self.grid_map = fog_of_war.reveal_fog_of_war(self.grid_map, np.array(self.xy_to_grid_index(self.agent_location[0], self.agent_location[1])), self.agent_location[2])
+    self.resize_map() # TODO: delete this
 
     if (self.display_test_figs or self.save_test_figs or self.done):
       self.display_map(depth)
@@ -149,6 +152,33 @@ class SemMapAgent(object):
     ax.set_label('Z')
     plt.show()"""
     return world_coord
+
+  def resize_map(self):
+    # Resize map by *1.25
+    resize_scale = 1.25
+    """self.map_grid_size = 0.2
+    self.map_width = 50
+    self.map_grid_width = np.round(self.map_width / self.map_grid_size).astype(int)
+    self.grid_map = np.zeros([self.map_grid_width, self.map_grid_width])
+    self.grid_map.fill(0.5)
+    # map_center is index of center of map
+    self.map_center = np.array([np.round(self.map_grid_width/2.).astype(int), np.round(self.map_grid_width/2.).astype(int)]) # TODO: Fix this to be middle of drawn map"""
+    # Recalculate parameters
+    new_map_width = np.round(self.map_width * resize_scale).astype(int)
+    new_map_grid_width = np.round(new_map_width / self.map_grid_size).astype(int)
+    new_grid_map = np.zeros([new_map_grid_width, new_map_grid_width])
+    
+    # Copy data to new grid map
+    new_grid_map.fill(0.5)
+    new_map_center = np.array([np.round(new_map_grid_width/2.).astype(int), np.round(new_map_grid_width/2.).astype(int)])
+    old_offset = new_map_center-self.map_center
+    new_grid_map[old_offset[0]:old_offset[0]+self.map_grid_width, old_offset[1]:old_offset[1]+self.map_grid_width] = self.grid_map
+
+    # Update map
+    self.map_width = new_map_width
+    self.map_grid_width = new_map_grid_width
+    self.map_center = new_map_center
+    self.grid_map = new_grid_map
 
   def get_rotation_matrix(self, ax_, angle):
     # TODO: Fix everything here
