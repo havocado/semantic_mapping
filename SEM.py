@@ -1,11 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import os
 import imageio
-from typing import Dict, List, Optional, Tuple
-from tempfile import mkstemp
-import tqdm
-import cv2
+import fog_of_war
 
 class SemMapAgent(object):
   def __init__(self, agent_config, initial_location):
@@ -23,15 +19,13 @@ class SemMapAgent(object):
     self.map_width = 50
     self.map_grid_width = np.round(self.map_width / self.map_grid_size).astype(int)
     self.grid_map = np.zeros([self.map_grid_width, self.map_grid_width])
+    self.grid_map.fill(0.5)
     # map_center is index of center of map
     self.map_center = np.array([np.round(self.map_grid_width/2.).astype(int), np.round(self.map_grid_width/2.).astype(int)]) # TODO: Fix this to be middle of drawn map
 
+    # Init plot figure
     self.fig, (self.ax0, self.ax1) = plt.subplots(1, 2)
     self.fig.set_size_inches(13.5, 7)
-    #self.xticks = np.arange(self.initial_location[0]-(self.map_center[0]/self.map_grid_size),
-      #self.initial_location[0]+(self.map_grid_width-self.map_center[0])/self.map_grid_size, self.map_grid_width/5)
-    #self.yticks = np.arange(self.initial_location[1]-(self.map_center[1]/self.map_grid_size),
-      #self.initial_location[1]+(self.map_grid_width-self.map_center[1])/self.map_grid_size, self.map_grid_width/5)
     self.fig.subplots_adjust(wspace=0, hspace=0)
     plt.ion()
 
@@ -48,7 +42,8 @@ class SemMapAgent(object):
     self.all_agent_marks = np.zeros([1,2])
 
     self.done = False
-    self.display_test_figs = True
+    self.display_test_figs = False
+    self.save_test_figs = True
 
     self.pngs = []
 
@@ -60,9 +55,11 @@ class SemMapAgent(object):
     self.update_agent_location(theta, location)
     coords = self.unproject_to_world(depth)
     self.add_to_map(coords)
-    if (self.display_test_figs or self.done):
+    self.grid_map = fog_of_war.reveal_fog_of_war(self.grid_map, np.array(self.xy_to_grid_index(self.agent_location[0], self.agent_location[1])), self.agent_location[2])
+
+    if (self.display_test_figs or self.save_test_figs or self.done):
       self.display_map(depth)
-    if self.done:
+    if (self.done and self.save_test_figs):
       self.save_gif()
 
   def update_agent_location(self, theta, location):
@@ -82,13 +79,11 @@ class SemMapAgent(object):
     # Slice where Y is between -1 and 1.
     sliced_coords = coords[coords[:,:,2]>-1]
     sliced_coords = sliced_coords[sliced_coords[:,2]<1]
-
     self.grid_map[tuple(self.xy_to_grid_index(sliced_coords[:,0], sliced_coords[:,1]))] = 1
-
     self.all_agent_marks = np.concatenate((self.all_agent_marks, self.agent_location[0:2].reshape(1,2)), axis=0)
     
   def display_map(self, depth):
-    self.ax1.imshow((self.grid_map), cmap='gray')
+    self.ax1.imshow(1-(self.grid_map), cmap='gray', vmin=0, vmax=1)
     self.ax0.imshow(depth/10.0, cmap='gray')
     self.ax1.plot(self.x_to_grid_index(self.all_agent_marks[:,0]), self.y_to_grid_index(self.all_agent_marks[:,1]), linestyle='-', color='green')
     self.ax1.scatter(self.x_to_grid_index(self.agent_location[0]), self.y_to_grid_index(self.agent_location[1]), marker='*', color='red')
@@ -96,12 +91,14 @@ class SemMapAgent(object):
     self.ax1.axis('off')
 
     # Saving
-    self.fig.savefig("results/results_"+str(self.frame_count)+".jpg")
-    self.pngs.append("results/results_"+str(self.frame_count)+".jpg")
+    if (self.save_test_figs):
+      self.fig.savefig("results/results_"+str(self.frame_count)+".jpg")
+      self.pngs.append("results/results_"+str(self.frame_count)+".jpg")
     
     plt.show()
-    plt.waitforbuttonpress()
-    self.fig.clf()
+    if (self.display_test_figs):
+      plt.waitforbuttonpress()
+    plt.cla() # TODO: replace with something faster
     
   def save_gif(self):
     images = []
@@ -109,7 +106,7 @@ class SemMapAgent(object):
       img = imageio.imread(png)
       print("appending ", png)
       images.append(img)
-    imageio.mimsave('temp.gif', images)
+    imageio.mimsave('temp.gif', images, fps=5)
 
   def depth2camera(self, depth):
     # TODO: Rewrite and organize.
