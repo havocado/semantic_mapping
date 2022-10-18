@@ -27,6 +27,13 @@ depth_sensor.resolution = [512, 512]
 depth_sensor.position = 1.5 * habitat_sim.geo.UP
 depth_sensor.sensor_type = habitat_sim.SensorType.DEPTH
 
+# Setting up rgb sensor
+sem_sensor = habitat_sim.CameraSensorSpec()
+sem_sensor.uuid = "semantic"
+sem_sensor.resolution = [512, 512]
+sem_sensor.position = 1.5 * habitat_sim.geo.UP
+sem_sensor.sensor_type = habitat_sim.SensorType.COLOR
+
 # Setting up agent config
 agent_config = habitat_sim.AgentConfiguration()
 agent_config.action_space = {
@@ -40,7 +47,7 @@ agent_config.action_space = {
         "turn_right", habitat_sim.agent.ActuationSpec(amount=30.0)
     ),
 }
-agent_config.sensor_specifications = [depth_sensor]
+agent_config.sensor_specifications = [depth_sensor, sem_sensor]
 
 sim = habitat_sim.Simulator(habitat_sim.Configuration(backend_cfg, [agent_config]))
 

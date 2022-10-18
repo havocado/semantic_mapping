@@ -44,14 +44,15 @@ class SemMapAgent(object):
     self.done = False
 
     # Params for testing
-    self.display_test_figs = False
-    self.save_test_figs = True
+    self.display_test_figs = True
+    self.save_test_figs = False
 
     self.pngs = []
 
   def act(self, obs, theta, location, done):
     self.frame_count = self.frame_count+1
     depth = obs['depth']
+    rgb = obs['rgb']
     theta = theta
     self.done = done
     self.update_agent_location(theta, location)
@@ -60,7 +61,7 @@ class SemMapAgent(object):
     self.grid_map = fog_of_war.reveal_fog_of_war(self.grid_map, np.array(self.xy_to_grid_index(self.agent_location[0], self.agent_location[1])), self.agent_location[2])
 
     if (self.display_test_figs or self.save_test_figs or self.done):
-      self.display_map(depth)
+      self.display_map(rgb)
     if (self.done and self.save_test_figs):
       self.save_gif()
 
@@ -95,7 +96,8 @@ class SemMapAgent(object):
     
   def display_map(self, depth):
     self.ax1.imshow(1-(self.grid_map), cmap='gray', vmin=0, vmax=1)
-    self.ax0.imshow(depth/10.0, cmap='gray')
+    #self.ax0.imshow(depth/10.0, cmap='gray')
+    self.ax0.imshow(depth)
     self.ax1.plot(self.x_to_grid_index(self.all_agent_marks[:,0]), self.y_to_grid_index(self.all_agent_marks[:,1]), linestyle='-', color='green')
     self.ax1.scatter(self.x_to_grid_index(self.agent_location[0]), self.y_to_grid_index(self.agent_location[1]), marker='*', color='red')
     self.ax0.axis('off')
