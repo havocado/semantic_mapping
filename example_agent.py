@@ -28,11 +28,11 @@ depth_sensor.position = 1.5 * habitat_sim.geo.UP
 depth_sensor.sensor_type = habitat_sim.SensorType.DEPTH
 
 # Setting up rgb sensor
-sem_sensor = habitat_sim.CameraSensorSpec()
-sem_sensor.uuid = "semantic"
-sem_sensor.resolution = [512, 512]
-sem_sensor.position = 1.5 * habitat_sim.geo.UP
-sem_sensor.sensor_type = habitat_sim.SensorType.COLOR
+rgb_sensor = habitat_sim.CameraSensorSpec()
+rgb_sensor.uuid = "rgb"
+rgb_sensor.resolution = [512, 512]
+rgb_sensor.position = 1.5 * habitat_sim.geo.UP
+rgb_sensor.sensor_type = habitat_sim.SensorType.COLOR
 
 # Setting up agent config
 agent_config = habitat_sim.AgentConfiguration()
@@ -47,7 +47,7 @@ agent_config.action_space = {
         "turn_right", habitat_sim.agent.ActuationSpec(amount=30.0)
     ),
 }
-agent_config.sensor_specifications = [depth_sensor, sem_sensor]
+agent_config.sensor_specifications = [depth_sensor, rgb_sensor]
 
 sim = habitat_sim.Simulator(habitat_sim.Configuration(backend_cfg, [agent_config]))
 
@@ -61,7 +61,7 @@ semantic_agent = SEM.SemMapAgent(agent_config, location)
 
 
 def _action(sim):
-  num_acts = 100
+  num_acts = 10
   for act_no in range(num_acts):
     print("Frame ", act_no)
     action_rand = random.randint(0,100)
@@ -87,6 +87,8 @@ def _action(sim):
     # TODO: Get rid of this
     obs["depth"] = obs["depth"][:,:,np.newaxis]
 
-    semantic_agent.act(obs, theta, location, (act_no == num_acts-1))
+    semantic_agent.act(obs, theta, location)
 
 _action(sim)
+
+semantic_agent.save_result();
