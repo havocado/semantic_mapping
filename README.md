@@ -1,3 +1,5 @@
+![skokloster_castle_resize](https://user-images.githubusercontent.com/47484587/196324233-92771932-eb4d-489a-8da0-66f9df7d92a4.gif)
+
 ## How to run
 
 #### 1. Installing habitat (skip if already installed)
