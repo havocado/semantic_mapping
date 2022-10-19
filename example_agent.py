@@ -17,7 +17,7 @@ if (display):
 backend_cfg = habitat_sim.SimulatorConfiguration()
 # Specifying scene path
 backend_cfg.scene_id = (
-  "data/scene_datasets/habitat-test-scenes/skokloster-castle.glb"
+  "data/mp3d/7y3sRwLe3Va/7y3sRwLe3Va.glb"
 )
 
 # Setting up sensor
@@ -27,12 +27,13 @@ depth_sensor.resolution = [512, 512]
 depth_sensor.position = 1.5 * habitat_sim.geo.UP
 depth_sensor.sensor_type = habitat_sim.SensorType.DEPTH
 
-# Setting up rgb sensor
+# Setting up sensor
 rgb_sensor = habitat_sim.CameraSensorSpec()
 rgb_sensor.uuid = "rgb"
 rgb_sensor.resolution = [512, 512]
 rgb_sensor.position = 1.5 * habitat_sim.geo.UP
 rgb_sensor.sensor_type = habitat_sim.SensorType.COLOR
+
 
 # Setting up agent config
 agent_config = habitat_sim.AgentConfiguration()
@@ -61,7 +62,7 @@ semantic_agent = SEM.SemMapAgent(agent_config, location)
 
 
 def _action(sim):
-  num_acts = 10
+  num_acts = 100
   for act_no in range(num_acts):
     print("Frame ", act_no)
     action_rand = random.randint(0,100)

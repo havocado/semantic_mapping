@@ -74,7 +74,7 @@ def bresenham_supercover_line(pt1, pt2):
 
 
 #@numba.jit(nopython=True)
-def draw_fog_of_war_line(top_down_map, new_grid_map, pt1, pt2):
+def draw_fog_of_war_line(top_down_map, new_grid_map, new_color_map, pt1, pt2):
     r"""Draws a line on the fog_of_war_mask mask between pt1 and pt2"""
 
     for pt in bresenham_supercover_line(pt1, pt2):
@@ -90,12 +90,14 @@ def draw_fog_of_war_line(top_down_map, new_grid_map, pt1, pt2):
             break
         
         new_grid_map[x, y] = 0
+        new_color_map[x, y] = np.ones(3)
 
 
 #@numba.jit(nopython=True)
 def _draw_loop(
     top_down_map,
     new_grid_map,
+    new_color_map,
     current_point,
     current_angle,
     max_line_len,
@@ -105,6 +107,7 @@ def _draw_loop(
         draw_fog_of_war_line(
             top_down_map,
             new_grid_map,
+            new_color_map,
             current_point,
             current_point
             + max_line_len
@@ -116,6 +119,7 @@ def _draw_loop(
 
 def reveal_fog_of_war(
     top_down_map: np.ndarray,
+    grid_color: np.ndarray,
     current_point: np.ndarray,
     current_angle: float,
     fov: float = 90,
@@ -144,13 +148,15 @@ def reveal_fog_of_war(
     )
 
     new_grid_map = top_down_map.copy()
+    new_color_map = grid_color.copy()
     _draw_loop(
         top_down_map,
         new_grid_map,
+        new_color_map,
         current_point,
         current_angle,
         max_line_len,
         angles,
     )
 
-    return new_grid_map
+    return new_grid_map, new_color_map

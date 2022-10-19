@@ -18,7 +18,9 @@ class SemMapAgent(object):
     self.map_grid_size = 0.2
     self.map_width = 10
     self.map_grid_width = np.round(self.map_width / self.map_grid_size).astype(int)
+    self.grid_color = np.zeros([self.map_grid_width, self.map_grid_width, 3])
     self.grid_map = np.zeros([self.map_grid_width, self.map_grid_width])
+    self.grid_color.fill(0.5)
     self.grid_map.fill(0.5)
     # map_center is index of center of map
     self.map_center = np.array([np.round(self.map_grid_width/2.).astype(int), np.round(self.map_grid_width/2.).astype(int)]) # TODO: Fix this to be middle of drawn map
@@ -44,8 +46,8 @@ class SemMapAgent(object):
     self.done = False
 
     # Params for testing
-    self.display_test_figs = True
-    self.save_test_figs = False
+    self.display_test_figs = False
+    self.save_test_figs = True
 
     self.result_imgs = []
 
@@ -56,20 +58,15 @@ class SemMapAgent(object):
     theta = theta
     self._update_agent_location(theta, location)
     coords = self._unproject_to_world(depth)
-    self._add_to_map(coords)
-    self.grid_map = fog_of_war.reveal_fog_of_war(self.grid_map, np.array(self._xy_to_grid_index(self.agent_location[0], self.agent_location[1])), self.agent_location[2])
+    self._add_to_map(coords, rgb)
+    self.grid_map, self.grid_color = fog_of_war.reveal_fog_of_war(self.grid_map, self.grid_color, np.array(self._xy_to_grid_index(self.agent_location[0], self.agent_location[1])), self.agent_location[2])
 
     # Display figures.
     # Note: figures are not actually displayed until plt.show()
     if (self.display_test_figs or self.save_test_figs):
-      self._display_sensor_output(depth)
+      self._display_sensor_output(rgb)
       self._display_map()
     plt.show()
-
-    # Wait for button press
-    if (self.display_test_figs):
-      plt.waitforbuttonpress()
-    plt.cla() # TODO: replace with something faster
 
     # Save figures for each frame. Required for creating gif.
     if (self.save_test_figs):
@@ -77,8 +74,12 @@ class SemMapAgent(object):
       self.fig.savefig(filename)
       self.result_imgs.append(filename)
 
+      # Wait for button press
+    if (self.display_test_figs):
+      plt.waitforbuttonpress()
+    plt.cla() # TODO: replace with something faster
+
   def save_result(self):
-    # Save gif on last frame
     if (self.save_test_figs):
       self._save_gif("results.gif")
 
@@ -95,9 +96,11 @@ class SemMapAgent(object):
     world_coords = self._geocentric2world(geocentric_coords)
     return world_coords
   
-  def _add_to_map(self, coords):
+  def _add_to_map(self, coords, color):
     # Slice where Y is between -1 and 1.
+    colors = color[coords[:,:,2]>-1]
     sliced_coords = coords[coords[:,:,2]>-1]
+    colors = colors[sliced_coords[:,2]<1]
     sliced_coords = sliced_coords[sliced_coords[:,2]<1]
 
     # Check if all coordinates are within grid size.
@@ -107,7 +110,11 @@ class SemMapAgent(object):
       grid_indices = self._xy_to_grid_index(sliced_coords[:,0], sliced_coords[:,1])
 
     # Add new data to map
-    self.grid_map[tuple(grid_indices)] = 1
+    #self.grid_map[tuple(grid_indices), :] = colors[:,0:4]
+    for i in range(len(grid_indices[0])):
+      self.grid_map[grid_indices[0][i],grid_indices[1][i]] = 1
+      self.grid_color[grid_indices[0][i],grid_indices[1][i]] = colors[i,0:3]/255.
+    
     # Add agent location info
     self.all_agent_marks = np.concatenate((self.all_agent_marks, self.agent_location[0:2].reshape(1,2)), axis=0)
     
@@ -119,20 +126,11 @@ class SemMapAgent(object):
     self.ax0.axis('off')
 
   def _display_map(self):
-    self.ax1.imshow(1-(self.grid_map), cmap='gray', vmin=0, vmax=1)
+    self.ax1.imshow(self.grid_color)
+    #self.ax1.imshow(1-(self.grid_map), cmap='gray', vmin=0, vmax=1)
     self.ax1.plot(self._x_to_grid_index(self.all_agent_marks[:,0]), self._y_to_grid_index(self.all_agent_marks[:,1]), linestyle='-', color='green')
     self.ax1.scatter(self._x_to_grid_index(self.agent_location[0]), self._y_to_grid_index(self.agent_location[1]), marker='*', color='red')
     self.ax1.axis('off')
-
-    # Saving
-    if (self.save_test_figs):
-      self.fig.savefig("results/results_"+str(self.frame_count)+".jpg")
-      self.pngs.append("results/results_"+str(self.frame_count)+".jpg")
-    
-    plt.show()
-    if (self.display_test_figs):
-      plt.waitforbuttonpress()
-    plt.cla() # TODO: replace with something faster
     
   def _save_gif(self, filename):
     images = []
@@ -171,6 +169,7 @@ class SemMapAgent(object):
     # Recalculate parameters
     new_map_width = np.round(self.map_width * resize_scale).astype(int)
     new_map_grid_width = np.round(new_map_width / self.map_grid_size).astype(int)
+    new_grid_color = np.zeros([new_map_grid_width, new_map_grid_width, 3])
     new_grid_map = np.zeros([new_map_grid_width, new_map_grid_width])
     
     # Copy data to new grid map
@@ -179,10 +178,14 @@ class SemMapAgent(object):
     old_offset = new_map_center[0:2]-self.map_center[0:2]
     new_grid_map[old_offset[0]:old_offset[0]+self.map_grid_width, old_offset[1]:old_offset[1]+self.map_grid_width] = self.grid_map
 
+    new_grid_color.fill(0.5)
+    new_grid_color[old_offset[0]:old_offset[0]+self.map_grid_width, old_offset[1]:old_offset[1]+self.map_grid_width] = self.grid_color
+
     # Update map
     self.map_width = new_map_width
     self.map_grid_width = new_map_grid_width
     self.map_center = new_map_center
+    self.grid_color = new_grid_color
     self.grid_map = new_grid_map
 
   def _get_rotation_matrix(self, ax_, angle):
