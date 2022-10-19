@@ -17,7 +17,7 @@ if (display):
 backend_cfg = habitat_sim.SimulatorConfiguration()
 # Specifying scene path
 backend_cfg.scene_id = (
-  "data/scene_datasets/habitat-test-scenes/skokloster-castle.glb"
+  "data/mp3d/7y3sRwLe3Va/7y3sRwLe3Va.glb"
 )
 
 # Setting up sensor
@@ -61,7 +61,7 @@ semantic_agent = SEM.SemMapAgent(agent_config, location)
 
 
 def _action(sim):
-  num_acts = 10
+  num_acts = 100
   for act_no in range(num_acts):
     print("Frame ", act_no)
     action_rand = random.randint(0,100)

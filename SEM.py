@@ -65,16 +65,16 @@ class SemMapAgent(object):
       self._display_map()
     plt.show()
 
-    # Wait for button press
-    if (self.display_test_figs):
-      plt.waitforbuttonpress()
-    plt.cla() # TODO: replace with something faster
-
     # Save figures for each frame. Required for creating gif.
     if (self.save_test_figs):
       filename = "results/results_"+str(self.frame_count)+".jpg"
       self.fig.savefig(filename)
       self.result_imgs.append(filename)
+
+    # Wait for button press
+    if (self.display_test_figs):
+      plt.waitforbuttonpress()
+    plt.cla() # TODO: replace with something faster
 
   def save_result(self):
     # Save gif on last frame
