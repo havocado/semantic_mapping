@@ -61,7 +61,7 @@ class SemMapAgent(object):
     # Display figures.
     # Note: figures are not actually displayed until plt.show()
     if (self.display_test_figs or self.save_test_figs):
-      self._display_sensor_output(depth)
+      self._display_sensor_output(depth, True)
       self._display_map()
     plt.show()
 
@@ -95,9 +95,9 @@ class SemMapAgent(object):
     return world_coords
   
   def _add_to_map(self, coords):
-    # Slice where Y is between -1 and 1.
+    # Slice where Y is between -1 and 0 from sensor height.
     sliced_coords = coords[coords[:,:,2]>-1]
-    sliced_coords = sliced_coords[sliced_coords[:,2]<1]
+    sliced_coords = sliced_coords[sliced_coords[:,2]<0]
 
     # Check if all coordinates are within grid size.
     grid_indices = self._xy_to_grid_index(sliced_coords[:,0], sliced_coords[:,1])
