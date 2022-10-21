@@ -17,7 +17,7 @@ if (display):
 backend_cfg = habitat_sim.SimulatorConfiguration()
 # Specifying scene path
 backend_cfg.scene_id = (
-  "data/mp3d/HxpKQynjfin/HxpKQynjfin.glb"
+  "data/mp3d/EU6Fwq7SyZv/EU6Fwq7SyZv.glb"
 )
 
 # Setting up sensor
