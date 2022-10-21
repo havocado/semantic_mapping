@@ -1,0 +1,1 @@
+This is an output directory. This file is placed here so git doesn't ignore the folder.
