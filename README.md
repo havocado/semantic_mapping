@@ -12,13 +12,12 @@ Downloading test data: https://github.com/facebookresearch/habitat-sim#testing
 
 #### 2. Test data path
 
-- Download path should match depth_agent.py line 58:
+- Download path should match example_agent.py line 58:
 
 ```python
-# Speficying path
-backend_cfg = habitat_sim.SimulatorConfiguration()
+# Specifying scene path
 backend_cfg.scene_id = (
-    "data/scene_datasets/habitat-test-scenes/skokloster-castle.glb"
+  "data/mp3d/EU6Fwq7SyZv/EU6Fwq7SyZv.glb"
 )
 ```
 
