@@ -49,8 +49,8 @@ class SemMapAgent(object):
     self.all_agent_marks = np.zeros([1,2])
 
     # Params for testing
-    self.display_test_figs = True
-    self.save_test_figs = False
+    self.display_test_figs = False
+    self.save_test_figs = True
 
     self.result_imgs = []
 
@@ -85,7 +85,7 @@ class SemMapAgent(object):
   def save_result(self):
     # Save gif on last frame
     if (self.save_test_figs):
-      self._save_gif("results.gif")
+      self._save_gif("result_videos/results.gif")
 
   def _update_agent_location(self, theta, location):
     self.agent_location[0:2] = (location - self.initial_location)
