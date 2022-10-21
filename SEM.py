@@ -37,11 +37,16 @@ class SemMapAgent(object):
     self.camera_zc = (self.res_height-1.0) / 2
     # TODO: replace 90 with self.camera_hfov
     self.camera_f = (self.res_width / 2.) / np.tan(np.deg2rad(90/ 2.))
+
+    # Init 2D map slicing height info
+    # 2D map will display heights between: 
+    #   [elevation+slice_range_below, elevation+slice_range_above]
+    self.slice_range_below = -1 # Should be 0 or negative
+    self.slice_range_above = 0 # Should be 0 or positive
     
+    # Init agent related info
     self.all_marked_points = np.array([])
     self.all_agent_marks = np.zeros([1,2])
-
-    self.done = False
 
     # Params for testing
     self.display_test_figs = False
@@ -52,6 +57,7 @@ class SemMapAgent(object):
   def act(self, obs, theta, location):
     self.frame_count = self.frame_count+1
     depth = obs['depth']
+    rgb = obs['rgb']
     theta = theta
     self._update_agent_location(theta, location)
     coords = self._unproject_to_world(depth)
@@ -61,7 +67,7 @@ class SemMapAgent(object):
     # Display figures.
     # Note: figures are not actually displayed until plt.show()
     if (self.display_test_figs or self.save_test_figs):
-      self._display_sensor_output(depth, True)
+      self._display_sensor_output(rgb)
       self._display_map()
     plt.show()
 
@@ -79,7 +85,7 @@ class SemMapAgent(object):
   def save_result(self):
     # Save gif on last frame
     if (self.save_test_figs):
-      self._save_gif("results.gif")
+      self._save_gif("result_videos/results.gif")
 
   def _update_agent_location(self, theta, location):
     self.agent_location[0:2] = (location - self.initial_location)
@@ -95,11 +101,13 @@ class SemMapAgent(object):
     return world_coords
   
   def _add_to_map(self, coords):
-    # Slice where Y is between -1 and 0 from sensor height.
-    sliced_coords = coords[coords[:,:,2]>-1]
-    sliced_coords = sliced_coords[sliced_coords[:,2]<0]
+    # 2D map will display heights between: 
+    #   [elevation+slice_range_below, elevation+slice_range_above]
+    sliced_coords = coords[coords[:,:,2]>self.slice_range_below]
+    sliced_coords = sliced_coords[sliced_coords[:,2]<self.slice_range_above]
 
     # Check if all coordinates are within grid size.
+    # If any coordinate go out of grid size, resize the map.
     grid_indices = self._xy_to_grid_index(sliced_coords[:,0], sliced_coords[:,1])
     while (not(np.min(grid_indices[0])>=0 and np.max(grid_indices[0])<=self.map_grid_width and np.min(grid_indices[1])>=0 and np.max(grid_indices[1])<=self.map_grid_width)):
       self._resize_map()

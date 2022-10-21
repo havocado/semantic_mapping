@@ -1,6 +1,7 @@
 .vscode
 __pycache__
 results/
-results.gif
+results_temp/
+result_videos/
 profiler/
 data/
