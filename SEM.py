@@ -21,11 +21,19 @@ class SemMapAgent(object):
     self.grid_map = np.zeros([self.map_grid_width, self.map_grid_width])
     self.grid_map.fill(0.5)
     # map_center is index of center of map
-    self.map_center = np.array([np.round(self.map_grid_width/2.).astype(int), np.round(self.map_grid_width/2.).astype(int)]) # TODO: Fix this to be middle of drawn map
+    self.map_center = np.array([np.round(self.map_grid_width/2.).astype(int), np.round(self.map_grid_width/2.).astype(int)])
+
+    # Init 3d map
+    self.map_grid_size_3d = 0.2
+    self.map_width_3d = 70
+    self.map_grid_width_3d = np.round(self.map_width_3d / self.map_grid_size_3d).astype(int)
+    self.grid_map_3d = np.zeros([self.map_grid_width_3d, self.map_grid_width_3d, self.map_grid_width_3d])
+    self.grid_map_3d.fill(0.0)
+    self.map_center_3d = np.array([np.round(self.map_grid_width_3d/2.).astype(int), np.round(self.map_grid_width_3d/2.).astype(int), np.round(self.map_grid_width_3d/2.).astype(int)])
 
     # Init plot figure
-    self.fig, (self.ax0, self.ax1) = plt.subplots(1, 2)
-    self.fig.set_size_inches(13.5, 7)
+    self.fig, (self.ax0, self.ax1, self.ax2) = plt.subplots(1, 3)
+    self.fig.set_size_inches(21, 7)
     self.fig.subplots_adjust(wspace=0, hspace=0)
     plt.ion()
 
@@ -49,8 +57,8 @@ class SemMapAgent(object):
     self.all_agent_marks = np.zeros([1,2])
 
     # Params for testing
-    self.display_test_figs = False
-    self.save_test_figs = True
+    self.display_test_figs = True
+    self.save_test_figs = False
 
     self.result_imgs = []
 
@@ -69,6 +77,7 @@ class SemMapAgent(object):
     if (self.display_test_figs or self.save_test_figs):
       self._display_sensor_output(rgb)
       self._display_map()
+      self._display_3d()
     plt.show()
 
     # Save figures for each frame. Required for creating gif.
@@ -80,7 +89,9 @@ class SemMapAgent(object):
     # Wait for button press
     if (self.display_test_figs):
       plt.waitforbuttonpress()
+    plt.sca(self.ax1)
     plt.cla() # TODO: replace with something faster
+    plt.sca(self.ax2)
 
   def save_result(self):
     # Save gif on last frame
@@ -115,6 +126,14 @@ class SemMapAgent(object):
 
     # Add new data to map
     self.grid_map[tuple(grid_indices)] = 1
+
+    # Add all data to 3D map
+    coords_for_3d = coords.reshape(-1, 3)
+    grid_indices_3d = np.array([self._x_to_grid_index_3d(coords_for_3d[:,0]), self._y_to_grid_index_3d(coords_for_3d[:,1]), self._z_to_grid_index_3d(coords_for_3d[:,2])])
+    grid_indices_3d[grid_indices_3d<0]=0
+    grid_indices_3d[grid_indices_3d>=self.map_grid_width_3d]=0
+    self.grid_map_3d[tuple(grid_indices_3d)] = 1
+
     # Add agent location info
     self.all_agent_marks = np.concatenate((self.all_agent_marks, self.agent_location[0:2].reshape(1,2)), axis=0)
     
@@ -130,6 +149,17 @@ class SemMapAgent(object):
     self.ax1.plot(self._x_to_grid_index(self.all_agent_marks[:,0]), self._y_to_grid_index(self.all_agent_marks[:,1]), linestyle='-', color='green')
     self.ax1.scatter(self._x_to_grid_index(self.agent_location[0]), self._y_to_grid_index(self.agent_location[1]), marker='*', color='red')
     self.ax1.axis('off')
+
+  def _display_3d(self):
+    #self.ax2.
+    plot_coords = np.where(self.grid_map_3d==1)
+    plot_x = plot_coords[0]
+    plot_y = plot_coords[1]
+    plot_z = plot_coords[2]
+    sub3d = self.fig.add_subplot(1, 3, 3, projection='3d')
+    #sub3d.scatter(plot_x, plot_y, plot_z, s=0.1, marker='.')
+    sub3d.voxels(self.grid_map_3d==1)
+    print("3d display done")
     
   def _save_gif(self, filename):
     images = []
@@ -207,3 +237,10 @@ class SemMapAgent(object):
     return np.round(x/self.map_grid_size).astype(int)+self.map_center[0]
   def _y_to_grid_index(self, y):
     return np.round(y/self.map_grid_size).astype(int)+self.map_center[1]
+
+  def _x_to_grid_index_3d(self, x):
+    return np.round(x/self.map_grid_size_3d).astype(int)+self.map_center_3d[0]
+  def _y_to_grid_index_3d(self, y):
+    return np.round(y/self.map_grid_size_3d).astype(int)+self.map_center_3d[1]
+  def _z_to_grid_index_3d(self, z):
+    return np.round(z/self.map_grid_size_3d).astype(int)+self.map_center_3d[2]
