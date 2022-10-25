@@ -78,7 +78,7 @@ Calling act() after each frames will add information to the map.
 - `quat`: rotation returned from `sim.last_state().rotation`
 - `position`: position returned from `sim.last_state().position`
 
-#### 3. (Optional) Save result as video
+#### 3. [Optional] Save result as video
 ```python
 SemMapAgent.save_result(filename)
 ```
