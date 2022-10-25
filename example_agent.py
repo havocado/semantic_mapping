@@ -4,7 +4,6 @@ import SEM
 import cv2 as _cv2
 import numpy as np
 import random
-
 import matplotlib as plt
 
 # Setting up backeng config
@@ -68,6 +67,7 @@ semantic_agent = SEM.SemMapAgent(
 def _action(sim):
   num_acts = 10
   for act_no in range(num_acts):
+    # Decide on action
     action_rand = random.randint(0,100)
     if action_rand <= 60:
         action_code = 0
@@ -82,7 +82,7 @@ def _action(sim):
         obs = sim.step("turn_right")
         print("Frame ", act_no, ": Turn right")
 
-    # Passing parameters to SemMapAgent
+    # Pass parameters to SemMapAgent.act()
     obs["depth"] = obs["depth"][:,:,np.newaxis]
     quat = sim.last_state().rotation
     position = sim.last_state().position[:3]
