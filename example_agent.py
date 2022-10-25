@@ -4,14 +4,7 @@ import SEM
 import cv2 as _cv2
 import numpy as np
 import random
-import quaternion
 import matplotlib as plt
-
-display = False
-
-# Setting up display
-if (display):
-  _cv2.namedWindow("sensor_depth")
 
 # Setting up backeng config
 backend_cfg = habitat_sim.SimulatorConfiguration()
@@ -20,7 +13,7 @@ backend_cfg.scene_id = (
   "data/mp3d/EU6Fwq7SyZv/EU6Fwq7SyZv.glb"
 )
 
-# Setting up sensor
+# Setting up depth sensor (Required)
 depth_sensor = habitat_sim.CameraSensorSpec()
 depth_sensor.uuid = "depth"
 depth_sensor.resolution = [512, 512]
@@ -33,6 +26,13 @@ rgb_sensor.uuid = "rgb"
 rgb_sensor.resolution = [512, 512]
 rgb_sensor.position = 1.5 * habitat_sim.geo.UP
 rgb_sensor.sensor_type = habitat_sim.SensorType.COLOR
+
+# Setting up semantic sensor
+sem_sensor = habitat_sim.CameraSensorSpec()
+sem_sensor.uuid = "semantic"
+sem_sensor.resolution = [512, 512]
+sem_sensor.position = 1.5 * habitat_sim.geo.UP
+sem_sensor.sensor_type = habitat_sim.SensorType.SEMANTIC
 
 # Setting up agent config
 agent_config = habitat_sim.AgentConfiguration()
@@ -47,48 +47,50 @@ agent_config.action_space = {
         "turn_right", habitat_sim.agent.ActuationSpec(amount=30.0)
     ),
 }
-agent_config.sensor_specifications = [depth_sensor, rgb_sensor]
+agent_config.sensor_specifications = [
+    depth_sensor, 
+    rgb_sensor, 
+    sem_sensor]
 
-sim = habitat_sim.Simulator(habitat_sim.Configuration(backend_cfg, [agent_config]))
+# Create sim
+sim = habitat_sim.Simulator(
+    habitat_sim.Configuration(backend_cfg, [agent_config]))
 
-topdown_position = sim.last_state().position[0:3]
-location = np.zeros(3)
-location[0] = topdown_position[2] * (-1)
-location[1] = topdown_position[0]
-location[2] = sim.last_state().position[0]
-
-semantic_agent = SEM.SemMapAgent(agent_config, location)
-
+# Create SemMapAgent
+initial_position = sim.last_state().position[0:3]
+semantic_agent = SEM.SemMapAgent(
+    agent_config, 
+    initial_position, 
+    display_figures=False, 
+    save_figures=True)
 
 def _action(sim):
-  num_acts = 100
+  num_acts = 10
   for act_no in range(num_acts):
-    print("Frame ", act_no)
+    # Decide on action
     action_rand = random.randint(0,100)
     if action_rand <= 60:
         action_code = 0
         obs = sim.step("move_forward")
+        print("Frame ", act_no, ": Move forward")
     elif action_rand <= 80:
         action_code = 1
         obs = sim.step("turn_left")
+        print("Frame ", act_no, ": Turn left")
     elif action_rand <= 100:
         action_code = 2
         obs = sim.step("turn_right")
-    print("action_code: ", action_code)
+        print("Frame ", act_no, ": Turn right")
 
-    theta = quaternion.as_rotation_vector(sim.last_state().rotation)
-    theta = theta[1]
-
-    topdown_position = sim.last_state().position[0:3]
-    location = np.zeros(2)
-    location[0] = topdown_position[2] * (-1)
-    location[1] = topdown_position[0]
-
-    # TODO: Get rid of this
+    # Pass parameters to SemMapAgent.act()
     obs["depth"] = obs["depth"][:,:,np.newaxis]
-
-    semantic_agent.act(obs, theta, location)
+    quat = sim.last_state().rotation
+    position = sim.last_state().position[:3]
+    semantic_agent.act(obs, quat, position)
 
 _action(sim)
 
-semantic_agent.save_result();
+# Save result as video
+# Need to set save_figures=True when initializing SemMapAgent,
+# otherwise the saved video will be empty
+semantic_agent.save_result("result_videos/results.gif")
