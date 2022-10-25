@@ -83,7 +83,6 @@ def _action(sim):
         print("Frame ", act_no, ": Turn right")
 
     # Pass parameters to SemMapAgent.act()
-    obs["depth"] = obs["depth"][:,:,np.newaxis]
     quat = sim.last_state().rotation
     position = sim.last_state().position[:3]
     semantic_agent.act(obs, quat, position)
