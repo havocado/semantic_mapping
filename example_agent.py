@@ -79,6 +79,7 @@ def _action(sim):
         print("Frame ", act_no, ": Turn left")
     elif action_rand <= 100:
         action_code = 2
+        obs = sim.step("turn_right")
         print("Frame ", act_no, ": Turn right")
 
     # Passing parameters to SemMapAgent

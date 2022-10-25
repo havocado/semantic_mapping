@@ -29,7 +29,7 @@ class SemMapAgent(object):
 
     # Init map related location info
     self.grid_per_meter = grid_per_meter
-    self.map_width_meter = 10
+    self.map_width_meter = map_width_meter
     self.map_grid_width = np.round(self.map_width_meter*self.grid_per_meter).astype(int)
     self.grid_map = np.zeros([self.map_grid_width, self.map_grid_width])
     self.grid_map.fill(0.5)
@@ -81,8 +81,7 @@ class SemMapAgent(object):
     self.grid_map = fog_of_war.reveal_fog_of_war(
       self.grid_map, 
       np.array(self._xy_to_grid_index(
-        self.agent_location[0], 
-        self.agent_location[1])), 
+        self.agent_location[0], self.agent_location[1])), 
       self.agent_location[2])
 
     # Display figures.
@@ -199,9 +198,7 @@ class SemMapAgent(object):
   def _geocentric2world(self, geocentric_coords):
     R = self._get_rotation_matrix([0.,0.,1.], angle=self.agent_location[2])
     world_coord = np.matmul(
-      geocentric_coords.reshape(-1,3), 
-      R.T
-    ).reshape(geocentric_coords.shape)
+      geocentric_coords.reshape(-1,3), R.T).reshape(geocentric_coords.shape)
     world_coord[:,:,0] = world_coord[:,:,0] + self.agent_location[1]
     world_coord[:,:,1] = world_coord[:,:,1] + self.agent_location[0]
     return world_coord
