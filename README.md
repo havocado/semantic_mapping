@@ -32,8 +32,59 @@ No argument required.
 
 ## Parameters
 
-Todo
+#### 1. Initialization
+```python
+SEM.SemMapAgent(
+  agent_config: habitat_sim.AgentConfiguration, 
+  initial_location: np.ndarray, 
+  display_figures: bool = False, 
+  save_figures: bool = True, 
+  grid_per_meter: int = 5, 
+  map_width_meter: int = 10,
+  slice_range_below: float = -1.0, # 0 or negative
+  slice_range_above: float = 0.0, # 0 or positive
+)
+```
+Initializes the Semantic map agent object.
 
+**Parameters**
+- `agent_config`: habitat_sim.AgentConfiguration object.
+- `initial_location`: Initial agent location, obtained by `sim.last_state().position`. This will also be the center of the generated map.
+- [Optional] `display_figures`: Option to display figures. Default: False
+  - If `True`, the program will wait for the user to click on the generated figure after it displays each figures. 
+  - If `False`, the figures may be still generated depending on `save_figures`, but the figures will disappear immediately instead of waiting for the use to click.
+- [Optional] `save_figures`: Option to save figures as results. Default: True
+  - To save results, `save_result()` also has to be called at the end of the program
+  - Note: Saving figures will significantly slow down the program, as this function will save image files for each frame and generate a video.
+- [Optional] `grid_per_meter`: Number of grid per meters (integer, at least 1) Default: 5
+  - Rounding errors may apply.
+- [Optional] `map_width_meter`: Initial size of the map in meters. Default: 10.
+  - When larger maps are needed, the agent will automatically resize the map, so there is no need to specify this parameter unless (1) it is taking to long to resize the map or (2) smaller map is needed.
+- [Optional] `slice_range_below`: The vertical display range for 2D maps, relative to the camera. 0 or negative.
+- [Optional] `slice_range_above`: The vertical display range for 2D maps, relative to the camera. 0 or positive.
+
+#### 2. Adding frames
+```python
+SemMapAgent.act(
+  obs, # observation returned from sim.step
+  quat: np.ndarray, 
+  position: np.ndarray,
+)
+```
+Calling act() after each frames will add information to the map.
+
+Parameters
+- `obs`: observation returned from `sim.step`
+- `quat`: rotation returned from `sim.last_state().rotation`
+- `position`: position returned from `sim.last_state().position`
+
+#### 3. (Optional) Save result as video
+```python
+SemMapAgent.save_result(filename)
+```
+Saves the results to destination.
+Parameters
+- `filename`: String, destination filename
 
 ## Credits
 
