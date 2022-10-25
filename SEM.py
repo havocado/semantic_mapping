@@ -68,9 +68,15 @@ class SemMapAgent(object):
 
     self.result_imgs = []
 
-  def act(self, obs, quat, position):
+  def act(
+    self, 
+    obs, # observation returned from sim.step
+    quat: np.ndarray, 
+    position: np.ndarray,
+  ) -> None:
     self.frame_count = self.frame_count+1
     depth = obs['depth']
+    depth = depth[:,:,np.newaxis]
     rgb = obs['rgb']
     semantic = obs['semantic']
     theta = self.quat_to_topdown_theta(quat)

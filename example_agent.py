@@ -4,7 +4,6 @@ import SEM
 import cv2 as _cv2
 import numpy as np
 import random
-import matplotlib as plt
 
 # Setting up backeng config
 backend_cfg = habitat_sim.SimulatorConfiguration()
@@ -83,7 +82,6 @@ def _action(sim):
         print("Frame ", act_no, ": Turn right")
 
     # Pass parameters to SemMapAgent.act()
-    obs["depth"] = obs["depth"][:,:,np.newaxis]
     quat = sim.last_state().rotation
     position = sim.last_state().position[:3]
     semantic_agent.act(obs, quat, position)
