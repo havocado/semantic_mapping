@@ -1,27 +1,42 @@
+import habitat_sim
 import numpy as np
 import matplotlib.pyplot as plt
+import quaternion
 import imageio
 import fog_of_war
 
 class SemMapAgent(object):
-  def __init__(self, agent_config, initial_location):
+  def __init__(
+    self, 
+    agent_config: habitat_sim.AgentConfiguration, 
+    initial_location: np.ndarray, 
+    display_figures: bool = False, 
+    save_figures: bool = True, 
+    grid_per_meter: int = 5, 
+    map_width_meter: int = 10,
+    slice_range_below: float = -1.0, # 0 or negative
+    slice_range_above: float = 0.0, # 0 or positive
+  ):
     self.frame_count = 0
     self.resolution = agent_config.sensor_specifications[0].resolution
     
     # Init location info
+    initial_location = self.habitat_position_to_2d(initial_location)
     self.agent_location = np.array([0,0,0],np.float32)
     self.initial_location = initial_location[0:2]
-    self.elevation = initial_location[2] # TODO: Verify!!
-    self.camera_height = agent_config.sensor_specifications[0].position[2] # TODO: Verify!!
+    self.elevation = initial_location[2]
+    self.camera_height = agent_config.sensor_specifications[0].position[2]
 
     # Init map related location info
-    self.map_grid_size = 0.2
-    self.map_width = 10
-    self.map_grid_width = np.round(self.map_width / self.map_grid_size).astype(int)
+    self.grid_per_meter = grid_per_meter
+    self.map_width_meter = 10
+    self.map_grid_width = np.round(self.map_width_meter*self.grid_per_meter).astype(int)
     self.grid_map = np.zeros([self.map_grid_width, self.map_grid_width])
     self.grid_map.fill(0.5)
     # map_center is index of center of map
-    self.map_center = np.array([np.round(self.map_grid_width/2.).astype(int), np.round(self.map_grid_width/2.).astype(int)]) # TODO: Fix this to be middle of drawn map
+    self.map_center = np.array([
+      np.round(self.map_grid_width/2.).astype(int), 
+      np.round(self.map_grid_width/2.).astype(int)])
 
     # Init plot figure
     self.fig, (self.ax0, self.ax1) = plt.subplots(1, 2)
@@ -35,39 +50,45 @@ class SemMapAgent(object):
     self.camera_hfov = agent_config.sensor_specifications[0].hfov
     self.camera_xc = (self.res_width-1.0) / 2
     self.camera_zc = (self.res_height-1.0) / 2
-    # TODO: replace 90 with self.camera_hfov
+    # TODO: replace 90 with self.camera_hfov (I don't know how to do it)
     self.camera_f = (self.res_width / 2.) / np.tan(np.deg2rad(90/ 2.))
 
     # Init 2D map slicing height info
     # 2D map will display heights between: 
     #   [elevation+slice_range_below, elevation+slice_range_above]
-    self.slice_range_below = -1 # Should be 0 or negative
-    self.slice_range_above = 0 # Should be 0 or positive
+    self.slice_range_below = slice_range_below # Should be 0 or negative
+    self.slice_range_above = slice_range_above # Should be 0 or positive
     
     # Init agent related info
     self.all_marked_points = np.array([])
     self.all_agent_marks = np.zeros([1,2])
 
-    # Params for testing
-    self.display_test_figs = False
-    self.save_test_figs = True
+    self.display_test_figs = display_figures
+    self.save_test_figs = save_figures
 
     self.result_imgs = []
 
-  def act(self, obs, theta, location):
+  def act(self, obs, quat, position):
     self.frame_count = self.frame_count+1
     depth = obs['depth']
     rgb = obs['rgb']
-    theta = theta
+    semantic = obs['semantic']
+    theta = self.quat_to_topdown_theta(quat)
+    location = self.habitat_position_to_2d(position)
     self._update_agent_location(theta, location)
     coords = self._unproject_to_world(depth)
     self._add_to_map(coords)
-    self.grid_map = fog_of_war.reveal_fog_of_war(self.grid_map, np.array(self._xy_to_grid_index(self.agent_location[0], self.agent_location[1])), self.agent_location[2])
+    self.grid_map = fog_of_war.reveal_fog_of_war(
+      self.grid_map, 
+      np.array(self._xy_to_grid_index(
+        self.agent_location[0], 
+        self.agent_location[1])), 
+      self.agent_location[2])
 
     # Display figures.
     # Note: figures are not actually displayed until plt.show()
     if (self.display_test_figs or self.save_test_figs):
-      self._display_sensor_output(rgb)
+      self._display_sensor_output(semantic)
       self._display_map()
     plt.show()
 
@@ -82,13 +103,13 @@ class SemMapAgent(object):
       plt.waitforbuttonpress()
     plt.cla() # TODO: replace with something faster
 
-  def save_result(self):
+  def save_result(self, filename):
     # Save gif on last frame
     if (self.save_test_figs):
-      self._save_gif("result_videos/results.gif")
+      self._save_gif(filename)
 
   def _update_agent_location(self, theta, location):
-    self.agent_location[0:2] = (location - self.initial_location)
+    self.agent_location[0:2] = (location[:2] - self.initial_location)
     self.agent_location[2] = theta
 
   def _unproject_to_world(self, depth):
@@ -109,14 +130,22 @@ class SemMapAgent(object):
     # Check if all coordinates are within grid size.
     # If any coordinate go out of grid size, resize the map.
     grid_indices = self._xy_to_grid_index(sliced_coords[:,0], sliced_coords[:,1])
-    while (not(np.min(grid_indices[0])>=0 and np.max(grid_indices[0])<=self.map_grid_width and np.min(grid_indices[1])>=0 and np.max(grid_indices[1])<=self.map_grid_width)):
+    while (
+      not(np.min(grid_indices[0])>=0 
+      and np.max(grid_indices[0])<=self.map_grid_width 
+      and np.min(grid_indices[1])>=0 
+      and np.max(grid_indices[1])<=self.map_grid_width)
+    ):
       self._resize_map()
       grid_indices = self._xy_to_grid_index(sliced_coords[:,0], sliced_coords[:,1])
 
     # Add new data to map
     self.grid_map[tuple(grid_indices)] = 1
     # Add agent location info
-    self.all_agent_marks = np.concatenate((self.all_agent_marks, self.agent_location[0:2].reshape(1,2)), axis=0)
+    self.all_agent_marks = np.concatenate((
+      self.all_agent_marks, 
+      self.agent_location[0:2].reshape(1,2)), 
+      axis=0)
     
   def _display_sensor_output(self, output, is_depth=False):
     if (is_depth):
@@ -127,8 +156,16 @@ class SemMapAgent(object):
 
   def _display_map(self):
     self.ax1.imshow(1-(self.grid_map), cmap='gray', vmin=0, vmax=1)
-    self.ax1.plot(self._x_to_grid_index(self.all_agent_marks[:,0]), self._y_to_grid_index(self.all_agent_marks[:,1]), linestyle='-', color='green')
-    self.ax1.scatter(self._x_to_grid_index(self.agent_location[0]), self._y_to_grid_index(self.agent_location[1]), marker='*', color='red')
+    self.ax1.plot(
+      self._x_to_grid_index(self.all_agent_marks[:,0]), 
+      self._y_to_grid_index(self.all_agent_marks[:,1]), 
+      linestyle='-', 
+      color='green')
+    self.ax1.scatter(
+      self._x_to_grid_index(self.agent_location[0]), 
+      self._y_to_grid_index(self.agent_location[1]), 
+      marker='*', 
+      color='red')
     self.ax1.axis('off')
     
   def _save_gif(self, filename):
@@ -141,23 +178,30 @@ class SemMapAgent(object):
 
   def _depth2camera(self, depth):
     # TODO: Rewrite and organize.
-    x, z = np.meshgrid(np.arange(depth.shape[-1]), np.arange(depth.shape[-2]-1, -1, -1))
+    x, z = np.meshgrid(
+      np.arange(depth.shape[-1]), np.arange(depth.shape[-2]-1, -1, -1))
     X = (x-self.camera_xc) * depth / self.camera_f
     Z = (z-self.camera_zc) * depth / self.camera_f
-    XYZ = np.concatenate((X[...,np.newaxis], depth[...,np.newaxis], Z[...,np.newaxis]), axis=X.ndim)
+    XYZ = np.concatenate(
+      (X[...,np.newaxis], depth[...,np.newaxis], Z[...,np.newaxis]), 
+      axis=X.ndim)
     return XYZ
 
   def _camera2geocentric(self, camera_coords):
     # Building rotation matrix
     R = self._get_rotation_matrix([1.,0.,0.], angle=np.deg2rad(self.elevation))
 
-    geocentric_coords = np.matmul(camera_coords.reshape(-1,3), R.T).reshape(camera_coords.shape)
+    geocentric_coords = np.matmul(
+      camera_coords.reshape(-1,3), R.T).reshape(camera_coords.shape)
     geocentric_coords[...,2] = geocentric_coords[...,2] + self.camera_height
     return geocentric_coords
 
   def _geocentric2world(self, geocentric_coords):
     R = self._get_rotation_matrix([0.,0.,1.], angle=self.agent_location[2])
-    world_coord = np.matmul(geocentric_coords.reshape(-1,3), R.T).reshape(geocentric_coords.shape)
+    world_coord = np.matmul(
+      geocentric_coords.reshape(-1,3), 
+      R.T
+    ).reshape(geocentric_coords.shape)
     world_coord[:,:,0] = world_coord[:,:,0] + self.agent_location[1]
     world_coord[:,:,1] = world_coord[:,:,1] + self.agent_location[0]
     return world_coord
@@ -166,18 +210,23 @@ class SemMapAgent(object):
     # Resize map by *1.2
     resize_scale = 1.2
     # Recalculate parameters
-    new_map_width = np.round(self.map_width * resize_scale).astype(int)
-    new_map_grid_width = np.round(new_map_width / self.map_grid_size).astype(int)
+    new_map_width = np.round(self.map_width_meter * resize_scale).astype(int)
+    new_map_grid_width = np.round(new_map_width * self.grid_per_meter).astype(int)
     new_grid_map = np.zeros([new_map_grid_width, new_map_grid_width])
     
     # Copy data to new grid map
     new_grid_map.fill(0.5)
-    new_map_center = np.array([np.round(new_map_grid_width/2.).astype(int), np.round(new_map_grid_width/2.).astype(int)])
+    new_map_center = np.array([
+      np.round(new_map_grid_width/2.).astype(int), 
+      np.round(new_map_grid_width/2.).astype(int)])
     old_offset = new_map_center[0:2]-self.map_center[0:2]
-    new_grid_map[old_offset[0]:old_offset[0]+self.map_grid_width, old_offset[1]:old_offset[1]+self.map_grid_width] = self.grid_map
+    new_grid_map[
+      old_offset[0]:old_offset[0]+self.map_grid_width, 
+      old_offset[1]:old_offset[1]+self.map_grid_width
+    ] = self.grid_map
 
     # Update map
-    self.map_width = new_map_width
+    self.map_width_meter = new_map_width
     self.map_grid_width = new_map_grid_width
     self.map_center = new_map_center
     self.grid_map = new_grid_map
@@ -196,14 +245,29 @@ class SemMapAgent(object):
       R = np.eye(3)
     return R
 
+  def habitat_position_to_2d(self, position):
+    # Convert 3d habitat coord to 2d coord and elevation
+    # Position: sim.last_state().position[0:3]
+    location = np.zeros(3)
+    location[0] = position[2] * (-1)
+    location[1] = position[0]
+    location[2] = position[1] # elevation
+    return location
+
+  def quat_to_topdown_theta(self, quat):
+    theta = quaternion.as_rotation_vector(quat)
+    theta = theta[1]
+    return theta
 
   def _normalize(self, v):
     return v / np.linalg.norm(v)
 
   # TODO: clean up below 2 functions
   def _xy_to_grid_index(self, x, y):
-    return [np.round(x/self.map_grid_size).astype(int)+self.map_center[0], np.round(y/self.map_grid_size).astype(int)+self.map_center[1]]
+    return [
+      np.round(x*self.grid_per_meter).astype(int)+self.map_center[0], 
+      np.round(y*self.grid_per_meter).astype(int)+self.map_center[1]]
   def _x_to_grid_index(self, x):
-    return np.round(x/self.map_grid_size).astype(int)+self.map_center[0]
+    return np.round(x*self.grid_per_meter).astype(int)+self.map_center[0]
   def _y_to_grid_index(self, y):
-    return np.round(y/self.map_grid_size).astype(int)+self.map_center[1]
+    return np.round(y*self.grid_per_meter).astype(int)+self.map_center[1]
