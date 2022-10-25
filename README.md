@@ -73,7 +73,7 @@ SemMapAgent.act(
 ```
 Calling act() after each frames will add information to the map.
 
-Parameters
+**Parameters**
 - `obs`: observation returned from `sim.step`
 - `quat`: rotation returned from `sim.last_state().rotation`
 - `position`: position returned from `sim.last_state().position`
@@ -83,7 +83,8 @@ Parameters
 SemMapAgent.save_result(filename)
 ```
 Saves the results to destination.
-Parameters
+
+**Parameters**
 - `filename`: String, destination filename
 
 ## Credits
