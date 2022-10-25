@@ -82,7 +82,7 @@ Calling act() after each frames will add information to the map.
 ```python
 SemMapAgent.save_result(filename)
 ```
-Saves the results to destination.
+Combines the figures to a video and saves to destination. This requires `save_figures` to be True when initializing SemMapAgent.
 
 **Parameters**
 - `filename`: String, destination filename
