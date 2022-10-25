@@ -4,6 +4,7 @@ import SEM
 import cv2 as _cv2
 import numpy as np
 import random
+import matplotlib as plt
 
 # Setting up backeng config
 backend_cfg = habitat_sim.SimulatorConfiguration()
