@@ -2,7 +2,7 @@
 
 ## How to run
 
-#### 1. Installing habitat (skip if already installed)
+### 1. Installing habitat (skip if already installed)
 
 **Setup**
 - Conda setup: https://github.com/facebookresearch/habitat-sim#preparing-conda-env
@@ -12,7 +12,7 @@
 - Download test data: https://github.com/facebookresearch/habitat-sim#testing
 - Or use any test scenes.
 
-#### 2. Test data path
+### 2. Test data path
 
 - Download path should match example_agent.py:
 
@@ -25,7 +25,7 @@ backend_cfg.scene_id = (
 
 Or this path in example_agent.py should be modified to match the actual data path.
 
-#### 3. Starting the program
+### 3. Starting the program
 
 ```
 $ python3 example_agent.py
@@ -34,7 +34,7 @@ No argument required.
 
 ## Parameters
 
-#### 1. Initialization
+### 1. Initialization
 ```python
 SEM.SemMapAgent(
   agent_config: habitat_sim.AgentConfiguration, 
@@ -65,7 +65,7 @@ Initializes the Semantic map agent object.
 - [Optional] `slice_range_below`: The vertical display range for 2D maps, relative to the camera. 0 or negative.
 - [Optional] `slice_range_above`: The vertical display range for 2D maps, relative to the camera. 0 or positive.
 
-#### 2. Adding frames
+### 2. Adding frames
 ```python
 SemMapAgent.act(
   obs, # observation returned from sim.step
@@ -80,7 +80,9 @@ Calling act() after each frames will add information to the map.
 - `quat`: rotation returned from `sim.last_state().rotation`
 - `position`: position returned from `sim.last_state().position`
 
-#### 3. [Optional] Save result as video
+## Getting data from SemMapAgent
+
+### 3. Save result as video
 ```python
 SemMapAgent.save_result(filename)
 ```
@@ -88,6 +90,25 @@ Combines the figures to a video and saves to destination. This requires `save_fi
 
 **Parameters**
 - `filename`: String, destination filename
+
+### 4. Get grid map data
+```python
+SemMapAgent.get_gridmap()
+```
+Returns
+- `grid_map`: np.ndarray (2d)
+  - Each entry in 2d array is an integer code representing the location on the grid map.
+  - 0: Unobserved
+  - 1: Empty
+  - 2: Not empty (This will later be replaced with semantic segmentation code)
+- `grid_per_meter`: represents how many grids are in 1 meter.
+
+### 5. Get agent location in grid
+```python
+SemMapAgent.get_agent_location_in_grid()
+```
+Returns
+- `agent_location`: np.ndarray of size 2, index of agent in grid map.
 
 ## Credits
 
