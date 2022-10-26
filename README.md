@@ -4,15 +4,17 @@
 
 #### 1. Installing habitat (skip if already installed)
 
-Conda setup: https://github.com/facebookresearch/habitat-sim#preparing-conda-env
+**Setup**
+- Conda setup: https://github.com/facebookresearch/habitat-sim#preparing-conda-env
+- Installing habitat: https://github.com/facebookresearch/habitat-sim#conda-install-habitat-sim
 
-Installing habitat: https://github.com/facebookresearch/habitat-sim#conda-install-habitat-sim
-
-Downloading test data: https://github.com/facebookresearch/habitat-sim#testing
+**Data**
+- Download test data: https://github.com/facebookresearch/habitat-sim#testing
+- Or use any test scenes.
 
 #### 2. Test data path
 
-- Download path should match example_agent.py line 58:
+- Download path should match example_agent.py:
 
 ```python
 # Specifying scene path
