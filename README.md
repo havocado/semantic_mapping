@@ -1,4 +1,4 @@
-![skokloster_castle_resize](https://user-images.githubusercontent.com/47484587/196324233-92771932-eb4d-489a-8da0-66f9df7d92a4.gif)
+![results](https://user-images.githubusercontent.com/47484587/197925919-4f9f9780-fe68-4567-8538-108844eaec81.gif)
 
 ## How to run
 
