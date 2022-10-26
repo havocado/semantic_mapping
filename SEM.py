@@ -113,6 +113,12 @@ class SemMapAgent(object):
     if (self.save_test_figs):
       self._save_gif(filename)
 
+  def get_gridmap(self):
+    return self.grid_map, self.grid_per_meter
+
+  def get_agent_location_in_grid(self):
+    return self.agent_location
+
   def _update_agent_location(self, theta, location):
     self.agent_location[0:2] = (location[:2] - self.initial_location)
     self.agent_location[2] = theta
