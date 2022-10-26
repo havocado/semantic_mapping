@@ -86,10 +86,10 @@ def draw_fog_of_war_line(top_down_map, new_grid_map, pt1, pt2):
         if y < 0 or y >= new_grid_map.shape[1]:
             break
 
-        if (new_grid_map[x, y] == 1):
+        if (new_grid_map[x, y] >= 2):
             break
         
-        new_grid_map[x, y] = 0
+        new_grid_map[x, y] = 1
 
 
 #@numba.jit(nopython=True)

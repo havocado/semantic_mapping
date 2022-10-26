@@ -1,5 +1,6 @@
 import habitat_sim
 import numpy as np
+import matplotlib
 import matplotlib.pyplot as plt
 import quaternion
 import imageio
@@ -28,21 +29,26 @@ class SemMapAgent(object):
     self.camera_height = agent_config.sensor_specifications[0].position[2]
 
     # Init map related location info
+    # Gridmap: 0(unobserved)/1(empty)/other code (segmentation)
     self.grid_per_meter = grid_per_meter
     self.map_width_meter = map_width_meter
     self.map_grid_width = np.round(self.map_width_meter*self.grid_per_meter).astype(int)
     self.grid_map = np.zeros([self.map_grid_width, self.map_grid_width])
-    self.grid_map.fill(0.5)
+    self.grid_map.fill(0)
     # map_center is index of center of map
     self.map_center = np.array([
       np.round(self.map_grid_width/2.).astype(int), 
       np.round(self.map_grid_width/2.).astype(int)])
 
     # Init plot figure
-    self.fig, (self.ax0, self.ax1) = plt.subplots(1, 2)
-    self.fig.set_size_inches(13.5, 7)
+    self.fig, (self.ax0, self.ax1, self.ax2) = plt.subplots(1, 3)
+    self.fig.set_size_inches(21, 7)
     self.fig.subplots_adjust(wspace=0, hspace=0)
     plt.ion()
+
+    self.sem_cmap = matplotlib.colors.ListedColormap(np.random.rand(1000,3))
+    self.sem_cmap.colors[0] = np.array([0.5,0.5,0.5]) # unobserved
+    self.sem_cmap.colors[1] = np.array([1.,1.,1.]) # empty
 
     # Init camera info
     self.res_width = self.resolution[0]
@@ -93,7 +99,8 @@ class SemMapAgent(object):
     # Display figures.
     # Note: figures are not actually displayed until plt.show()
     if (self.display_test_figs or self.save_test_figs):
-      self._display_sensor_output(semantic)
+      self._display_sensor_output_1(rgb)
+      self._display_sensor_output_2(semantic)
       self._display_map()
     plt.show()
 
@@ -135,6 +142,7 @@ class SemMapAgent(object):
     # Check if all coordinates are within grid size.
     # If any coordinate go out of grid size, resize the map.
     grid_indices = self._xy_to_grid_index(sliced_coords[:,0], sliced_coords[:,1])
+    if (len(grid_indices[0])==0): return
     while (
       not(np.min(grid_indices[0])>=0 
       and np.max(grid_indices[0])<=self.map_grid_width 
@@ -145,33 +153,40 @@ class SemMapAgent(object):
       grid_indices = self._xy_to_grid_index(sliced_coords[:,0], sliced_coords[:,1])
 
     # Add new data to map
-    self.grid_map[tuple(grid_indices)] = 1
+    self.grid_map[tuple(grid_indices)] = 2
     # Add agent location info
     self.all_agent_marks = np.concatenate((
       self.all_agent_marks, 
       self.agent_location[0:2].reshape(1,2)), 
       axis=0)
     
-  def _display_sensor_output(self, output, is_depth=False):
+  def _display_sensor_output_1(self, output, is_depth=False):
     if (is_depth):
       self.ax0.imshow(output/10.0, cmap='gray')
     else:
       self.ax0.imshow(output)
     self.ax0.axis('off')
 
+  def _display_sensor_output_2(self, output, is_depth=False):
+    if (is_depth):
+      self.ax1.imshow(output/10.0, cmap='gray')
+    else:
+      self.ax1.imshow(output, cmap=self.sem_cmap, vmin=0, vmax=999)
+    self.ax1.axis('off')
+
   def _display_map(self):
-    self.ax1.imshow(1-(self.grid_map), cmap='gray', vmin=0, vmax=1)
-    self.ax1.plot(
+    self.ax2.imshow(self.grid_map, cmap=self.sem_cmap, vmin=0, vmax=999)
+    self.ax2.plot(
       self._x_to_grid_index(self.all_agent_marks[:,0]), 
       self._y_to_grid_index(self.all_agent_marks[:,1]), 
       linestyle='-', 
       color='green')
-    self.ax1.scatter(
+    self.ax2.scatter(
       self._x_to_grid_index(self.agent_location[0]), 
       self._y_to_grid_index(self.agent_location[1]), 
       marker='*', 
       color='red')
-    self.ax1.axis('off')
+    self.ax2.axis('off')
     
   def _save_gif(self, filename):
     images = []
@@ -218,7 +233,7 @@ class SemMapAgent(object):
     new_grid_map = np.zeros([new_map_grid_width, new_map_grid_width])
     
     # Copy data to new grid map
-    new_grid_map.fill(0.5)
+    new_grid_map.fill(0)
     new_map_center = np.array([
       np.round(new_map_grid_width/2.).astype(int), 
       np.round(new_map_grid_width/2.).astype(int)])
