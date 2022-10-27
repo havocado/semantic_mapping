@@ -36,64 +36,39 @@ No argument required.
 
 ### 1. Initialization
 ```python
-SEM.SemMapAgent(
-  agent_config: habitat_sim.AgentConfiguration, 
-  initial_location: np.ndarray, 
-  display_figures: bool = False, 
-  save_figures: bool = True, 
-  grid_per_meter: int = 5, 
+SEM.SemMap(
+  cell_dim_meters: np.ndarray = np.ndarray([0.2,0.2,0.2])
   map_width_meter: int = 10,
-  slice_range_below: float = -1.0, # 0 or negative
-  slice_range_above: float = 0.0, # 0 or positive
 )
 ```
 Initializes the Semantic map agent object.
 
 **Parameters**
-- `agent_config`: habitat_sim.AgentConfiguration object.
-- `initial_location`: Initial agent location, obtained by `sim.last_state().position`. This will also be the center of the generated map.
-- [Optional] `display_figures`: Option to display figures. Default: False
-  - If `True`, the program will wait for the user to click on the generated figure after it displays each figures. 
-  - If `False`, the figures may be still generated depending on `save_figures`, but the figures will disappear immediately instead of waiting for the use to click.
-- [Optional] `save_figures`: Option to save figures as results. Default: True
-  - To save results, `save_result()` also has to be called at the end of the program
-  - Note: Saving figures will significantly slow down the program, as this function will save image files for each frame and generate a video.
-- [Optional] `grid_per_meter`: Number of grid per meters (integer, at least 1) Default: 5
-  - Rounding errors may apply.
+- [Optional] `cell_dim_meters`: Cell widths of each grids. Default:
 - [Optional] `map_width_meter`: Initial size of the map in meters. Default: 10.
   - When larger maps are needed, the agent will automatically resize the map, so there is no need to specify this parameter unless (1) it is taking to long to resize the map or (2) smaller map is needed.
-- [Optional] `slice_range_below`: The vertical display range for 2D maps, relative to the camera. 0 or negative.
-- [Optional] `slice_range_above`: The vertical display range for 2D maps, relative to the camera. 0 or positive.
 
 ### 2. Adding frames
 ```python
-SemMapAgent.act(
-  obs, # observation returned from sim.step
-  quat: np.ndarray, 
+SemMap.add_frame(
+  depth: np.ndarray,
+  semantic: np.ndarray,
   position: np.ndarray,
+  quat: np.ndarray, 
 )
 ```
-Calling act() after each frames will add information to the map.
+Calling add_frame() for observation frames will add information to the map.
 
 **Parameters**
-- `obs`: observation returned from `sim.step`
-- `quat`: rotation returned from `sim.last_state().rotation`
-- `position`: position returned from `sim.last_state().position`
+- `depth`: depth frame obtained from a depth sensor.
+- `quat`: rotation of the camera.
+- `position`: position of the camera.
 
-## Getting data from SemMapAgent
+## Getting data from SemMap
 
-### 3. Save result as video
+### 3. Get grid map data
 ```python
-SemMapAgent.save_result(filename)
-```
-Combines the figures to a video and saves to destination. This requires `save_figures` to be True when initializing SemMapAgent.
-
-**Parameters**
-- `filename`: String, destination filename
-
-### 4. Get grid map data
-```python
-SemMapAgent.get_gridmap()
+SemMap.get_gridmap()
 ```
 Returns
 - `grid_map`: np.ndarray (2d)
@@ -101,14 +76,46 @@ Returns
   - 0: Unobserved
   - 1: Empty
   - 2: Not empty (This will later be replaced with semantic segmentation code)
-- `grid_per_meter`: represents how many grids are in 1 meter.
+- `cell_dim_meters`: represents how many grids are in 1 meter.
 
-### 5. Get agent location in grid
+### 3. Display 2D topdown map
 ```python
-SemMapAgent.get_agent_location_in_grid()
+SemMap.display_topdown(
+  height_min: int,
+  height_max: int,
+)
 ```
-Returns
-- `agent_location`: np.ndarray of size 2, index of agent in grid map.
+Displays a top-down map for the specified height range. Each grid will be included in the top-down map only if the center of the grid is within the height range.
+
+**Parameters**
+- `height_min`: int, minimum height to display
+- `height_max`: int, maximum height to display
+
+### 4. Save 2D topdown map
+```python
+SemMap.save_topdown(
+  height_min: int,
+  height_max: int,
+  filename: string
+)
+```
+Saves a top-down map for the specified height range as an image file. Each grid will be included in the top-down map only if the center of the grid is within the height range.
+
+**Parameters**
+- `height_min`: int, minimum height to display
+- `height_max`: int, maximum height to display
+- `filename`: String, name of the file. Has to be unique for each call.
+
+### 5. Save a video of topdown maps
+```python
+SemMap.save_video(
+  filename: string)
+```
+Generates a video of saved topdown maps
+
+**Parameters**
+- `filename`: String, name of the file
+
 
 ## Credits
 
