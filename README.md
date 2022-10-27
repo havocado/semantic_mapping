@@ -57,14 +57,17 @@ SemMap.integrate_frame(
   semantic: np.ndarray,
   position: np.ndarray,
   quat: np.ndarray, 
+  hfov: int = 90,
 )
 ```
 Calling integrate_frame() for observation frames will add information to the map.
 
 **Parameters**
-- `depth`: depth frame obtained from a depth sensor.
-- `quat`: rotation of the camera.
-- `position`: position of the camera.
+- `depth`: Depth frame obtained from a depth sensor.
+- `semantic`: Semantic segmentation obtained from a semantic sensor.
+- `position`: Position of the camera.
+- `quat`: Rotation of the camera.
+- `hfov`: Field of view. Default: 90
 
 ## Getting data from SemMap
 
