@@ -81,7 +81,9 @@ Returns
   - 0: Unobserved
   - 1: Empty
   - 2: Not empty (This will later be replaced with semantic segmentation code)
-- `cell_dim_meters`: represents how many grids are in 1 meter.
+- `cell_dim_meters`: Represents how many grids are in 1 meter.
+- `top_left`: Coordinate of the top-left end of the map.
+- `bottom-right`: Coordinate of the bottom-right end of the map.
 
 ### 4. Display 2D topdown map
 ```python
