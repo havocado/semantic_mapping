@@ -37,16 +37,18 @@ No argument required.
 ### 1. Initialization
 ```python
 SEM.SemMap(
-  cell_dim_meters: np.ndarray = np.ndarray([0.2,0.2,0.2])
-  map_width_meter: int = 10,
+  cell_dim_meters: np.ndarray = np.ndarray([0.2, 0.2, 0.2]),
+  map_width_meter: np.ndarray = np.ndarray([10.0, 10.0, 3.0]),
+  resize_map_on : bool = True
 )
 ```
 Initializes the Semantic map agent object.
 
 **Parameters**
 - [Optional] `cell_dim_meters`: Cell widths of each grids. Default: [0.2,0.2,0.2]
-- [Optional] `map_width_meter`: Initial size of the map in meters. Default: 10.
-  - When larger maps are needed, the agent will automatically resize the map, so there is no need to specify this parameter unless (1) it is taking to long to resize the map or (2) smaller map is needed.
+- [Optional] `map_width_meter`: Initial size of the map in meters. Default: [10,10,3]
+- [Optional] `resize_map_on`: Set True to resize the map when needed. Default: True
+  - If False, observations outside of map will be ignored.
 
 ### 2. Adding frames
 ```python
