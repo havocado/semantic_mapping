@@ -50,14 +50,14 @@ Initializes the Semantic map agent object.
 
 ### 2. Adding frames
 ```python
-SemMap.add_frame(
+SemMap.integrate_frame(
   depth: np.ndarray,
   semantic: np.ndarray,
   position: np.ndarray,
   quat: np.ndarray, 
 )
 ```
-Calling add_frame() for observation frames will add information to the map.
+Calling integrate_frame() for observation frames will add information to the map.
 
 **Parameters**
 - `depth`: depth frame obtained from a depth sensor.
