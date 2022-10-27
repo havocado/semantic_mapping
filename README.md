@@ -109,9 +109,10 @@ Saves a top-down map for the specified height range as an image file. Each grid 
 ### 5. Save a video of topdown maps
 ```python
 SemMap.save_video(
-  filename: string)
+  filename: string
+)
 ```
-Generates a video of saved topdown maps
+Generates a video of saved topdown maps.
 
 **Parameters**
 - `filename`: String, name of the file
