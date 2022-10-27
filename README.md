@@ -116,6 +116,9 @@ Generates a video of saved topdown maps
 **Parameters**
 - `filename`: String, name of the file
 
+## 3D Map
+- Display for 3D map is currently not implemented for performance reasons.
+
 
 ## Credits
 
