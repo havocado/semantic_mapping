@@ -78,7 +78,7 @@ Returns
   - 2: Not empty (This will later be replaced with semantic segmentation code)
 - `cell_dim_meters`: represents how many grids are in 1 meter.
 
-### 3. Display 2D topdown map
+### 4. Display 2D topdown map
 ```python
 SemMap.display_topdown(
   height_min: int,
@@ -91,7 +91,7 @@ Displays a top-down map for the specified height range. Each grid will be includ
 - `height_min`: int, minimum height to display
 - `height_max`: int, maximum height to display
 
-### 4. Save 2D topdown map
+### 5. Save 2D topdown map
 ```python
 SemMap.save_topdown(
   height_min: int,
@@ -106,7 +106,7 @@ Saves a top-down map for the specified height range as an image file. Each grid 
 - `height_max`: int, maximum height to display
 - `filename`: String, name of the file. Has to be unique for each call.
 
-### 5. Save a video of topdown maps
+### 6. Save a video of topdown maps
 ```python
 SemMap.save_video(
   filename: string
