@@ -44,7 +44,7 @@ SEM.SemMap(
 Initializes the Semantic map agent object.
 
 **Parameters**
-- [Optional] `cell_dim_meters`: Cell widths of each grids. Default:
+- [Optional] `cell_dim_meters`: Cell widths of each grids. Default: [0.2,0.2,0.2]
 - [Optional] `map_width_meter`: Initial size of the map in meters. Default: 10.
   - When larger maps are needed, the agent will automatically resize the map, so there is no need to specify this parameter unless (1) it is taking to long to resize the map or (2) smaller map is needed.
 
