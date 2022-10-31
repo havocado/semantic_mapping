@@ -76,8 +76,8 @@ Calling integrate_frame() for observation frames will add information to the map
 SemMap.get_gridmap()
 ```
 Returns
-- `grid_map`: np.ndarray (2d)
-  - Each entry in 2d array is an integer code representing the location on the grid map.
+- `grid_map`: np.ndarray (3d)
+  - Each entry in 3d array is an integer code representing the location on the grid map.
   - 0: Unobserved
   - 1: Empty
   - 2: Not empty (This will later be replaced with semantic segmentation code)
