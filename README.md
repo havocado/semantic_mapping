@@ -1,6 +1,6 @@
 ![results](https://user-images.githubusercontent.com/47484587/197925919-4f9f9780-fe68-4567-8538-108844eaec81.gif)
 
-## How to run
+## How to run the test code
 
 ### 1. Installing habitat (skip if already installed)
 
@@ -47,8 +47,9 @@ Initializes the Semantic map agent object.
 **Parameters**
 - [Optional] `cell_dim_meters`: Cell widths of each grids (meters). Default: [0.2,0.2,0.2]
 - [Optional] `initial_map_size`: Initial map size in number of cells for each dimension. Default: [50,10,15]
-- [Optional] `toggle_resize_map`: Set True to resize the map when needed. Default: True
-  - If False, observations outside of map will be ignored.
+- [Optional] `toggle_resize_map`: Whether to resize map when needed. Default: True
+  - If True, the map is resized when any observation occurs outside of map.
+  - If False, observations outside of map will be ignored.                                                                                                                                                                                                                                                                                                                                        
 
 ### 2. Adding frames
 ```python
