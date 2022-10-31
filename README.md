@@ -38,16 +38,16 @@ No argument required.
 ```python
 SEM.SemMap(
   cell_dim_meters: np.ndarray = np.ndarray([0.2, 0.2, 0.2]),
-  map_width_meter: np.ndarray = np.ndarray([10.0, 10.0, 3.0]),
-  resize_map_on : bool = True
+  initial_map_size: np.ndarray = np.ndarray([50, 50, 15]),
+  toggle_resize_map : bool = True
 )
 ```
 Initializes the Semantic map agent object.
 
 **Parameters**
-- [Optional] `cell_dim_meters`: Cell widths of each grids. Default: [0.2,0.2,0.2]
-- [Optional] `map_width_meter`: Initial size of the map in meters. Default: [10,10,3]
-- [Optional] `resize_map_on`: Set True to resize the map when needed. Default: True
+- [Optional] `cell_dim_meters`: Cell widths of each grids (meters). Default: [0.2,0.2,0.2]
+- [Optional] `initial_map_size`: Initial map size in number of cells for each dimension. Default: [50,10,15]
+- [Optional] `toggle_resize_map`: Set True to resize the map when needed. Default: True
   - If False, observations outside of map will be ignored.
 
 ### 2. Adding frames
@@ -127,6 +127,9 @@ Generates a video of saved topdown maps.
 ## 3D Map
 - Display for 3D map is currently not implemented for performance reasons.
 
+## Error handling
+- Currently there is no error handling for 3D reconstruction. Instead, SemMap assumes all the depth frames are correct.
+- Error correction for semantic segmentation is not implemented yet, but will be implemented in the future.
 
 ## Credits
 
