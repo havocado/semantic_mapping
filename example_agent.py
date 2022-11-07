@@ -10,7 +10,10 @@ import matplotlib as plt
 backend_cfg = habitat_sim.SimulatorConfiguration()
 # Specifying scene path
 backend_cfg.scene_id = (
-  "data/mp3d/q9vSo1VnCiC/q9vSo1VnCiC.glb"
+    "data/00861-GLAQ4DNUx5U/GLAQ4DNUx5U.semantic.glb"
+)
+backend_cfg.scene_dataset_config_file = (
+    "data/hm3d_annotated_example_basis.scene_dataset_config.json"
 )
 
 # Setting up depth sensor (Required)
@@ -65,7 +68,7 @@ semantic_agent = SEM.SemMapAgent(
     save_figures=True)
 
 def _action(sim):
-  num_acts = 100
+  num_acts = 30
   for act_no in range(num_acts):
     # Decide on action
     action_rand = random.randint(0,100)

@@ -49,6 +49,7 @@ class SemMapAgent(object):
     self.sem_cmap = matplotlib.colors.ListedColormap(np.random.rand(1000,3))
     self.sem_cmap.colors[0] = np.array([0.5,0.5,0.5]) # unobserved
     self.sem_cmap.colors[1] = np.array([1.,1.,1.]) # empty
+    self.sem_cmap.colors[2] = np.array([0.,0.,0.]) # No semantics
 
     # Init camera info
     self.res_width = self.resolution[0]
