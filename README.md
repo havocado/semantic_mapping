@@ -45,6 +45,7 @@ SEM.SemMap(
 Initializes the Semantic map agent object.
 
 **Parameters**
+
 - [Optional] `cell_dim_meters`: Cell widths of each grids (meters). Default: [0.2,0.2,0.2]
 - [Optional] `initial_map_size`: Initial map size in number of cells for each dimension. Default: [50,10,15]
 - [Optional] `toggle_resize_map`: Whether to resize map when needed. Default: True
@@ -131,6 +132,7 @@ Generates a video of saved topdown maps.
 ## Error handling
 - Currently there is no error handling for 3D reconstruction. Instead, SemMap assumes all the depth frames are correct.
 - Error correction for semantic segmentation is not implemented yet, but will be implemented in the future.
+
 
 ## Credits
 
