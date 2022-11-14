@@ -1,6 +1,6 @@
 ![results](https://user-images.githubusercontent.com/47484587/197925919-4f9f9780-fe68-4567-8538-108844eaec81.gif)
 
-## How to run
+## How to run the test code
 
 ### 1. Installing habitat (skip if already installed)
 
@@ -38,17 +38,19 @@ No argument required.
 ```python
 SEM.SemMap(
   cell_dim_meters: np.ndarray = np.ndarray([0.2, 0.2, 0.2]),
-  map_width_meter: np.ndarray = np.ndarray([10.0, 10.0, 3.0]),
-  resize_map_on : bool = True
+  initial_map_size: np.ndarray = np.ndarray([50, 50, 15]),
+  toggle_resize_map : bool = True
 )
 ```
 Initializes the Semantic map agent object.
 
 **Parameters**
-- [Optional] `cell_dim_meters`: Cell widths of each grids. Default: [0.2,0.2,0.2]
-- [Optional] `map_width_meter`: Initial size of the map in meters. Default: [10,10,3]
-- [Optional] `resize_map_on`: Set True to resize the map when needed. Default: True
-  - If False, observations outside of map will be ignored.
+
+- [Optional] `cell_dim_meters`: Cell widths of each grids (meters). Default: [0.2,0.2,0.2]
+- [Optional] `initial_map_size`: Initial map size in number of cells for each dimension. Default: [50,10,15]
+- [Optional] `toggle_resize_map`: Whether to resize map when needed. Default: True
+  - If True, the map is resized when any observation occurs outside of map.
+  - If False, observations outside of map will be ignored.                                                                                                                                                                                                                                                                                                                                        
 
 ### 2. Adding frames
 ```python
@@ -76,14 +78,14 @@ Calling integrate_frame() for observation frames will add information to the map
 SemMap.get_gridmap()
 ```
 Returns
-- `grid_map`: np.ndarray (2d)
-  - Each entry in 2d array is an integer code representing the location on the grid map.
+- `grid_map`: np.ndarray (3d)
+  - Each entry in 3d array is an integer code representing the location on the grid map.
   - 0: Unobserved
   - 1: Empty
   - 2: Not empty (This will later be replaced with semantic segmentation code)
-- `cell_dim_meters`: Represents how many grids are in 1 meter.
-- `top_left`: Coordinate of the top-left end of the map.
-- `bottom-right`: Coordinate of the bottom-right end of the map.
+- `cell_dim_meters`: Cell widths of each grids (meters)
+- `top_left_above`: Coordinate of the top-left-above end (first cell) of the map.
+- `bottom-right_below`: Coordinate of the bottom-right-below end (last cell) of the map.
 
 ### 4. Display 2D topdown map
 ```python
@@ -126,6 +128,10 @@ Generates a video of saved topdown maps.
 
 ## 3D Map
 - Display for 3D map is currently not implemented for performance reasons.
+
+## Error handling
+- Currently there is no error handling for 3D reconstruction. Instead, SemMap assumes all the depth frames are correct.
+- Error correction for semantic segmentation is not implemented yet, but will be implemented in the future.
 
 
 ## Credits
