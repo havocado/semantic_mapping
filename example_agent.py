@@ -10,7 +10,7 @@ import matplotlib as plt
 backend_cfg = habitat_sim.SimulatorConfiguration()
 # Specifying scene path
 backend_cfg.scene_id = (
-    "data/00861-GLAQ4DNUx5U/GLAQ4DNUx5U.semantic.glb"
+    "data/00861-GLAQ4DNUx5U/GLAQ4DNUx5U.basis.glb"
 )
 backend_cfg.scene_dataset_config_file = (
     "data/hm3d_annotated_example_basis.scene_dataset_config.json"
@@ -64,7 +64,7 @@ initial_position = sim.last_state().position[0:3]
 semantic_agent = SEM.SemMapAgent(
     agent_config, 
     initial_position, 
-    display_figures=False, 
+    display_figures=True, 
     save_figures=True)
 
 def _action(sim):
