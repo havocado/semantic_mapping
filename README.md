@@ -57,6 +57,7 @@ Initializes the Semantic map agent object.
 SemMap.integrate_frame(
   depth: np.ndarray,
   semantic: np.ndarray,
+  resolution: np.ndarray,
   position: np.ndarray,
   quat: np.ndarray, 
   hfov: int = 90,
@@ -68,6 +69,7 @@ Calling integrate_frame() for observation frames will add information to the map
 - `depth`: Depth frame obtained from a depth sensor.
 - `semantic`: Semantic segmentation obtained from a semantic sensor.
 - `position`: Position of the camera.
+- `resolution`: Resolution of the frames. This has to be same for both depth and semantic frames.
 - `quat`: Rotation of the camera.
 - `hfov`: Field of view. Default: 90
 
