@@ -120,6 +120,7 @@ class SemMapAgent(object):
     return self.agent_location
 
   def _update_agent_location(self, theta, location):
+    # Relative location to the initial location
     self.agent_location[0:2] = (location[:2] - self.initial_location)
     self.agent_location[2] = theta
 

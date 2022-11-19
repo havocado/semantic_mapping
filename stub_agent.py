@@ -1,10 +1,7 @@
-import os
-import habitat_sim
-import SEM
-import cv2 as _cv2
 import numpy as np
 import random
-import matplotlib as plt
+import habitat_sim
+import SemMap
 
 # Setting up backeng config
 backend_cfg = habitat_sim.SimulatorConfiguration()
@@ -59,13 +56,10 @@ agent_config.sensor_specifications = [
 sim = habitat_sim.Simulator(
     habitat_sim.Configuration(backend_cfg, [agent_config]))
 
-# Create SemMapAgent
-initial_position = sim.last_state().position[0:3]
-semantic_agent = SEM.SemMapAgent(
-    agent_config, 
-    initial_position, 
-    display_figures=True, 
-    save_figures=True)
+semantic_mapper = SemMap.SemanticMapper(
+  cell_dim_meters=np.array([0.2, 0.2, 0.2]),
+  initial_map_size=np.array([50, 50, 30]),
+  toggle_resize_map=True)
 
 def _action(sim):
   num_acts = 10
@@ -85,14 +79,17 @@ def _action(sim):
         obs = sim.step("turn_right")
         print("Frame ", act_no, ": Turn right")
 
-    # Pass parameters to SemMapAgent.act()
+    # Pass parameters to SemanticMapper.integrate_frame()
+    # Resolution is expected to be same for all sensors
+    depth = obs['depth']
+    semantic = obs['semantic']
+    resolution = agent_config.sensor_specifications[0].resolution
+    position = position = sim.last_state().position
     quat = sim.last_state().rotation
-    position = sim.last_state().position[:3]
-    semantic_agent.act(obs, quat, position)
+
+    semantic_mapper.integrate_frame(depth, semantic, resolution, position, quat)
+
+    # Display
+    semantic_mapper.display_topdown(height_min=0.2, height_max=1.5)
 
 _action(sim)
-
-# Save result as video
-# Need to set save_figures=True when initializing SemMapAgent,
-# otherwise the saved video will be empty
-semantic_agent.save_result("result_videos/results.gif")
