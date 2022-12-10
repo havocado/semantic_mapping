@@ -1,21 +1,53 @@
 import numpy as np
+import matplotlib
 import matplotlib.pyplot as plt
 import quaternion
 
+# Grid map description
+# -2 - empty
+# -1 - obstacle, unannotated
+# 0 - unobserved
+# >=1 - semantic segmentation id
+# Saved value: +2 to above.
 class SemanticMap(object):
   def __init__(
     self,
     cell_dim_meters,
     initial_map_size
   ):
-    print("init() for SemanticMap called")
+    # Save map dimension information
     self.cell_dim_meters = cell_dim_meters
     self.initial_map_size = initial_map_size
-    self.gridmap = np.ndarray(initial_map_size) # TODO: Fix
 
+    # Construct grid array
+    self.gridmap = np.ndarray(initial_map_size) # TODO: Fix
+    self.gridmap.fill(0)
+
+    # _init_on_first_frame will take care of other initializations
     self.is_empty = True
 
-  # Decide the map position on first frame
+  # Takes an array of n points and adds to the map.
+  # Input:  world_coords (n*3)
+  #         semantic_code (n*1)
+  def add_points_to_map(
+    self,
+    world_coords: np.ndarray,
+    semantic_code: np.ndarray
+  ):
+    if (self.is_empty):
+      self._init_on_first_frame(world_coords)
+      self.is_empty = False
+
+    grid_ind = self._world_coord_to_grid_index(world_coords).astype(int)
+
+    # TODO: Add error correction
+    for i in range(grid_ind.shape[0]):
+      if semantic_code[i] < 1:
+        self.gridmap[grid_ind[i,0],grid_ind[i,1],grid_ind[i,2]] = -1
+      else:
+        self.gridmap[grid_ind[i,0],grid_ind[i,1],grid_ind[i,2]] = semantic_code[i]
+    
+# Decide the map position on first frame
   def _init_on_first_frame(
     self,
     world_coords: np.ndarray,
@@ -30,29 +62,11 @@ class SemanticMap(object):
     self.map_max_world_coord = (self.map_min_world_coord 
         + np.multiply(self.initial_map_size, self.cell_dim_meters))
 
-  def add_points_to_map(
-    self,
-    world_coords: np.ndarray,
-    semantic_code: np.ndarray
-  ):
-    if (self.is_empty):
-      self._init_on_first_frame(world_coords)
-      self.is_empty = False
-
-    grid_ind = self._world_coord_to_grid_index(world_coords).astype(int)
-
-    for i in range(grid_ind.shape[0]):
-      self.gridmap[grid_ind[i,0],grid_ind[i,1],grid_ind[i,2]] = semantic_code[i]
-
-    return
-
   def _world_coord_to_grid_index(self, world_coords):
     filtered_coords = world_coords[~np.isnan(world_coords).any(axis=1)]
     relative_coord = filtered_coords - np.transpose(self.map_min_world_coord[:,None])
     result_ind = np.round(relative_coord/np.transpose(self.cell_dim_meters[:,None])).astype(int)
     return result_ind
-
-
 
 # Wrapper class for Semantic Map
 class SemanticMapper(object):
@@ -72,8 +86,8 @@ class SemanticMapper(object):
     # Init Map
     self.map = SemanticMap(cell_dim_meters, initial_map_size)
 
-    # Display related. TODO: Remove.
-    self.fig, (self.ax0, self.ax1) = plt.subplots(1, 2)
+    # Init color map
+    
 
   def integrate_frame(
     self,
@@ -86,6 +100,8 @@ class SemanticMapper(object):
   ):
     print("integrate_frame() called")
     self.frame_count = self.frame_count + 1
+
+    semantic[semantic<1] = 0
     
     # 1. Set agent location
     self._update_agent_location(position, quat)
@@ -102,8 +118,11 @@ class SemanticMapper(object):
 
   def display_topdown(
     self,
+    axis, # plt.axis
     height_min: int,
     height_max: int,
+    norm: matplotlib.colors.Normalize,
+    color: matplotlib.colors.ListedColormap
   ):
     
     """
@@ -115,9 +134,7 @@ class SemanticMapper(object):
     gridmap = self.map.gridmap # TODO: Fix this later    
     height_stub = np.round(gridmap.shape[2]/3).astype(int)
     displaymap = gridmap[:,:,height_stub]
-    self.ax1.imshow(displaymap, cmap='gray')
-    plt.waitforbuttonpress()
-    print("display_topdown() done")
+    axis.imshow(displaymap, norm=norm, cmap=color)
 
 
   def save_topdown(
@@ -176,8 +193,8 @@ class SemanticMapper(object):
     R = self._get_rotation_matrix([0.,0.,1.], angle=theta)
     world_coord = np.matmul(
       geocentric_coords.reshape(-1,3), R.T).reshape(geocentric_coords.shape)
-    world_coord[:,:,0] = world_coord[:,:,0] + position[1]
-    world_coord[:,:,1] = world_coord[:,:,1] + position[0]
+    world_coord[:,:,0] = world_coord[:,:,0] + position[0]
+    world_coord[:,:,1] = world_coord[:,:,1] + position[1]
     return world_coord
 
   def _get_rotation_matrix(self, ax_, angle):
