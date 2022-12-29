@@ -6,6 +6,7 @@ import csv
 import habitat_sim
 import SemMap
 import imageio
+import semantic_segmentation
 
 # Options
 save_figure_as_gif = True
@@ -15,7 +16,7 @@ wait_after_display = False
 backend_cfg = habitat_sim.SimulatorConfiguration()
 # Specifying scene path
 backend_cfg.scene_id = (
-    "data/00861-GLAQ4DNUx5U/GLAQ4DNUx5U.basis.glb"
+    "data/hm3d/00366-fxbzYAGkrtm/fxbzYAGkrtm.basis.glb"
 )
 backend_cfg.scene_dataset_config_file = (
     "data/hm3d_annotated_example_basis.scene_dataset_config.json"
@@ -67,20 +68,25 @@ sim = habitat_sim.Simulator(
 # Create SemanticMapper object
 semantic_mapper = SemMap.SemanticMapper(
   cell_dim_meters=np.array([0.2, 0.2, 0.2]),
-  initial_map_size=np.array([50, 50, 30]),
+  initial_map_size=np.array([100, 100, 100]),
   toggle_resize_map=True)
 
+# Setup semantic segmentation
+sem_seg = semantic_segmentation.SemanticSegmentation()
+
 # Display related.
-# Here ax0 will show semantic frame
-# and ax1 will show topdown view of semantic map
-fig, (ax0, ax1) = plt.subplots(1, 2)
+# Here ax0 will show rgb image
+# ax1 will show semantic frame
+# and ax2 will show topdown view of semantic map
+fig, (ax0, ax1, ax2) = plt.subplots(1, 3)
 ax0.axis('off')
 ax1.axis('off')
+ax2.axis('off')
 
 # Read csv file to get color map
 # delimeter: comma
 cmap_container = {}
-with open('data/00861-GLAQ4DNUx5U/GLAQ4DNUx5U.semantic.txt', 'r') as f:
+with open('data/hm3d/00366-fxbzYAGkrtm/fxbzYAGkrtm.semantic.txt', 'r') as f:
     reader = csv.reader(f, delimiter=',')
     # Skip first line as it contains header
     next(reader)
@@ -109,7 +115,7 @@ norm_semantic = matplotlib.colors.Normalize(vmin=-2, vmax=len(cmap_container)-2)
 result_imgs = []
 
 def _action(sim):
-  num_acts = 100
+  num_acts = 30
   for act_no in range(num_acts):
     # Decide on action
     action_rand = random.randint(0,100)
@@ -130,7 +136,24 @@ def _action(sim):
     # Pass parameters to SemanticMapper.integrate_frame() here
     # Resolution is expected to be same for all sensors (depth, rgb, semantic)
     depth = obs['depth']
-    semantic = obs['semantic']
+
+    #semantic = obs['semantic']
+    rgb = obs['rgb']
+    # cut out the alpha channel
+    rgb = rgb[:, :, 0:3]
+
+    # Run semantic segmentation
+    seg_result = sem_seg.run(im=rgb)
+    print("seg_result: ", seg_result['instances'].pred_masks)
+    if (seg_result['instances'].pred_masks.shape[0] == 0):
+        # No object detected
+        semantic = np.ndarray((512, 512), dtype=np.int32)
+        semantic.fill(-1)
+    else:
+        semantic = np.argmax(seg_result['instances'].pred_masks, axis=0)
+        semantic = semantic.cpu().detach().numpy()
+        # TODO: Handle configuration here
+
     resolution = agent_config.sensor_specifications[0].resolution
     position = position = sim.last_state().position
     quat = sim.last_state().rotation
@@ -138,8 +161,10 @@ def _action(sim):
     semantic_mapper.integrate_frame(depth, semantic, resolution, position, quat)
 
     # Display
-    ax0.imshow(semantic+2, norm=norm_semantic, cmap=cmap_semantic)
-    semantic_mapper.display_topdown(ax1, height_min=0.2, height_max=1.5, norm=norm_semantic, color=cmap_semantic)
+    ax0.imshow(rgb)
+    ax1.imshow(semantic, norm=norm_semantic, cmap=cmap_semantic)
+    semantic_mapper.display_topdown(ax2, height_min=0.2, height_max=1.5, norm=norm_semantic, color=cmap_semantic)
+    ax2.axis('off')
 
     if (save_figure_as_gif):
         filename = "results/results_"+str(act_no)+".jpg"
@@ -149,6 +174,13 @@ def _action(sim):
     if (wait_after_display):
         plt.waitforbuttonpress()
     plt.cla()
+
+    # TODO: Remove
+    
+    if (np.mod(act_no, 3) == 0):
+        filename = "results/rgb_results_"+str(act_no)+".jpg"
+        plt.imsave(filename, obs['rgb'])
+    
 
 _action(sim)
 

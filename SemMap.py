@@ -41,7 +41,16 @@ class SemanticMap(object):
     grid_ind = self._world_coord_to_grid_index(world_coords).astype(int)
 
     # TODO: Add error correction
+    # TODO: Add resizing
     for i in range(grid_ind.shape[0]):
+      # check if out of bound
+      if (grid_ind[i,0] < 0 or grid_ind[i,0] >= self.gridmap.shape[0] or
+          grid_ind[i,1] < 0 or grid_ind[i,1] >= self.gridmap.shape[1] or
+          grid_ind[i,2] < 0 or grid_ind[i,2] >= self.gridmap.shape[2]):
+        #print("Out of bound: ", grid_ind[i,:])
+        continue
+
+      #print("semantic_code[i]: ", semantic_code[i])
       if semantic_code[i] < 1:
         self.gridmap[grid_ind[i,0],grid_ind[i,1],grid_ind[i,2]] = -1
       else:
