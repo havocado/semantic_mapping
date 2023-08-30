@@ -1,10 +1,19 @@
-# Repository description
+# Project description
 
 This is a repository for my USRA term project on 3D reconstruction and semantic mapping.
 
 The goal of the project was to implement an egocentric mapping working on AI Habitat, the interactive 3D simulation for training robots/agents on a virtual 3D setting. While the virtual 3D setting provides advantages on training (in the way that the robot never breaks by falling off the stairs, or that agents can move a thousand step per second), using a virtual simulator involves its own challenges such as the use of large 3D data, or, even configuring the projects. In fact, working with the configuration was where most of the struggle was on this project, as an undergraduate student with little experience. 
 
 This repository successfully runs with the ground truth semantic segmentation marked on the top-down 2D map. Although the intention was to extend the project to semantic segmentation on 3D simulation, I decided to pursue a career outside of machine learning while working on the project.
+
+#### Notes on 3D reconstruction
+
+This project was done without knowledge of cutting-edge 3D reconstruction techniques. The agent location is always known within the simulation, and the depth sensor is assumed to be error-free.
+
+#### Notes on code quality
+
+I was almost new to Python when I was working on this project.
+---
 
 ![results](https://user-images.githubusercontent.com/47484587/197925919-4f9f9780-fe68-4567-8538-108844eaec81.gif)
 
