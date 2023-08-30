@@ -13,6 +13,7 @@ This project was done without knowledge of cutting-edge 3D reconstruction techni
 #### Notes on code quality
 
 I was almost new to Python when I was working on this project.
+
 ---
 
 ![results](https://user-images.githubusercontent.com/47484587/197925919-4f9f9780-fe68-4567-8538-108844eaec81.gif)
